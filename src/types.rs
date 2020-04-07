@@ -43,7 +43,7 @@ pub enum Packet {
     },
     /// Request adding a new Join Pattern to the Junction.
     AddJoinPatternRequest { join_pattern: JoinPattern },
-    /// Request the Junction to shut down the internal control thread.
+    /// Request the internal control thread managing the `Message`s to shut down.
     ShutDownRequest,
 }
 

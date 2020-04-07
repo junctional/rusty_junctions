@@ -1,4 +1,4 @@
-//! Structs to implement different types of `JoinPatterns`.
+//! Structs to implement different types of `JoinPattern`s.
 
 use std::any::Any;
 use std::sync::mpsc::Sender;

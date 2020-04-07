@@ -133,13 +133,13 @@
 //! repository](https://github.com/smueksch/rusty_junctions).
 
 mod bag;
-mod channels;
+pub mod channels;
 mod controller;
 mod counter;
 mod function_transforms;
 mod inverted_index;
 mod junction;
-mod patterns;
-mod types;
+pub mod patterns;
+pub mod types;
 
 pub use junction::Junction;
