@@ -1,8 +1,0 @@
-[package]
-name = "storage-cell"
-version = "0.1.0"
-authors = ["smueksch <sebastian.mueksch+github@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-rusty_junctions = { path = "../../signal-style/rusty_junctions" }
