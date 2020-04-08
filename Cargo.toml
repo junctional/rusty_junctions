@@ -11,3 +11,6 @@ keywords = ["join-pattern", "join-calculus", "concurrency"]
 categories = ["concurrency"]
 
 [dependencies]
+
+[dev-dependencies]
+rand = "0.7.3"
