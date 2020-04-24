@@ -1,13 +1,20 @@
+/// Rendezvous implementation for n entities to meet up.
+///
+/// Implmentation is a translation of the rendezvous written in Polyphonic C#
+/// in the "Jingle bells: Solving the santa claus problem in polyphonic c#"
+/// paper by Benton.
+///
+/// Link to the paper:
+/// https://www.researchgate.net/profile/Nick_Benton2/publication/2569067_Jingle_Bells_Solving_the_Santa_Claus_Problem_in/links/0c9605264f92520a08000000/Jingle-Bells-Solving-the-Santa-Claus-Problem-in.pdf
+
 use std::thread;
 
-use rusty_junctions::Junction;
+use rusty_junctions::channels::{BidirChannel, RecvChannel};
 use rusty_junctions::types::ControllerHandle;
-use rusty_junctions::channels::{RecvChannel, BidirChannel};
+use rusty_junctions::Junction;
 
 // Set up a private Junction for a rendezvous and return the public channels.
-pub fn rendezvous() -> (
-    ControllerHandle, BidirChannel<u32, ()>, RecvChannel<()>
-) {
+pub fn rendezvous() -> (ControllerHandle, BidirChannel<u32, ()>, RecvChannel<()>) {
     let mut j = Junction::new();
 
     // Asynchronous token channel to carry the state.

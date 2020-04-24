@@ -1,3 +1,6 @@
+/// Simple storage cell implementation to demonstrate every available
+/// channel as well as join patterns with repeated channels.
+
 use rusty_junctions::Junction;
 
 fn main() {

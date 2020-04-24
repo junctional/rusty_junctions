@@ -9,9 +9,9 @@ use rand::Rng;
 
 use std::{thread, time::Duration};
 
-use rusty_junctions::Junction;
+use rusty_junctions::channels::{BidirChannel, RecvChannel};
 use rusty_junctions::types::ControllerHandle;
-use rusty_junctions::channels::{RecvChannel, BidirChannel};
+use rusty_junctions::Junction;
 
 fn main() {
     /*****************************
@@ -26,7 +26,7 @@ fn main() {
 
     // Asynchronous channel to carry the number of elves that are queued up.
     let elves_waiting = elves.send_channel::<u32>();
-    
+
     /********************************
      * Reindeer Junction & Channels *
      ********************************/
@@ -66,7 +66,7 @@ fn main() {
 
     // Rendezvous channels to let elves into room.
     let (mut ch_1, room_in_accept_n, room_in_entry) = rendezvous();
-    
+
     // Rendezvous channels to let elves out of room.
     let (mut ch_2, room_out_accept_n, room_out_entry) = rendezvous();
 
@@ -83,15 +83,19 @@ fn main() {
     // Count up how many elves are waiting and possibly send ready message.
     let elves_ready_clone = elves_ready.clone();
     let elves_waiting_clone = elves_waiting.clone();
-    elves.when(&elves_waiting).and_recv(&elf_queue).then_do(move |e| {
-        if e == 2 { // Last elf just queued.
-            elves_ready_clone.send(()).unwrap();
-            println!("<Elves> Group of 3 ready!");
-        } else {
-            elves_waiting_clone.send(e + 1).unwrap();
-            println!("<Elves> {} waiting!", e + 1);
-        }
-    });
+    elves
+        .when(&elves_waiting)
+        .and_recv(&elf_queue)
+        .then_do(move |e| {
+            if e == 2 {
+                // Last elf just queued.
+                elves_ready_clone.send(()).unwrap();
+                println!("<Elves> Group of 3 ready!");
+            } else {
+                elves_waiting_clone.send(e + 1).unwrap();
+                println!("<Elves> {} waiting!", e + 1);
+            }
+        });
 
     /**************************
      * Reindeer Join Patterns *
@@ -101,17 +105,21 @@ fn main() {
     let reindeer_ready_clone = reindeer_ready.clone();
     let reindeer_waiting_clone = reindeer_waiting.clone();
     let clear_reindeer_not_ready_clone = clear_reindeer_not_ready.clone();
-    reindeer.when(&reindeer_waiting).and_recv(&reindeer_back).then_do(move |r| {
-        if r == 8 { // Last reindeer just came back.
-            clear_reindeer_not_ready_clone.recv().unwrap();
-            reindeer_ready_clone.send(()).unwrap();
-            println!("<Reindeer> All 9 assembled!");
-        } else {
-            reindeer_waiting_clone.send(r + 1).unwrap();
-            println!("<Reindeer> {} waiting!", r + 1);
-        }
-    });
-    
+    reindeer
+        .when(&reindeer_waiting)
+        .and_recv(&reindeer_back)
+        .then_do(move |r| {
+            if r == 8 {
+                // Last reindeer just came back.
+                clear_reindeer_not_ready_clone.recv().unwrap();
+                reindeer_ready_clone.send(()).unwrap();
+                println!("<Reindeer> All 9 assembled!");
+            } else {
+                reindeer_waiting_clone.send(r + 1).unwrap();
+                println!("<Reindeer> {} waiting!", r + 1);
+            }
+        });
+
     /***********************
      * Santa Join Patterns *
      ***********************/
@@ -119,62 +127,72 @@ fn main() {
     // Enough elves are ready so let's consult with them.
     let reindeer_not_ready_clone = reindeer_not_ready.clone();
     let elves_waiting_clone = elves_waiting.clone();
-    santa.when(&elves_ready).and(&reindeer_not_ready).and_recv(&wait_to_be_woken).then_do(move |_, _| {
-        let mut rng = rand::thread_rng();
+    santa
+        .when(&elves_ready)
+        .and(&reindeer_not_ready)
+        .and_recv(&wait_to_be_woken)
+        .then_do(move |_, _| {
+            let mut rng = rand::thread_rng();
 
-        // Reindeer will still not be ready so resend just consumed message.
-        reindeer_not_ready_clone.send(()).unwrap();
+            // Reindeer will still not be ready so resend just consumed message.
+            reindeer_not_ready_clone.send(()).unwrap();
 
-        // Show 3 elves into the office once all are ready.
-        println!("<Santa> Woken by elves, now showing them in!");
-        room_in_accept_n.send_recv(3).unwrap();
-        println!("<Santa> Elf group shown in!");
+            // Show 3 elves into the office once all are ready.
+            println!("<Santa> Woken by elves, now showing them in!");
+            room_in_accept_n.send_recv(3).unwrap();
+            println!("<Santa> Elf group shown in!");
 
-        // Reset how many elves are waiting to allow others to form a group.
-        elves_waiting_clone.send(0).unwrap();
+            // Reset how many elves are waiting to allow others to form a group.
+            elves_waiting_clone.send(0).unwrap();
 
-        // Consult with elves for 0 to 10 seconds, i.e. pause thread.
-        println!("<Santa> Now consulting with elves!");
-        thread::sleep(Duration::from_secs(rng.gen_range(0, 10)));
-        println!("<Santa> Consulted with elves!");
+            // Consult with elves for 0 to 10 seconds, i.e. pause thread.
+            println!("<Santa> Now consulting with elves!");
+            thread::sleep(Duration::from_secs(rng.gen_range(0, 10)));
+            println!("<Santa> Consulted with elves!");
 
-        // Done consulting with elves so show all 3 out once all are ready.
-        println!("<Santa> Now showing out elves!");
-        room_out_accept_n.send_recv(3).unwrap();
-        println!("<Santa> Elf group shown out!");
-    });
+            // Done consulting with elves so show all 3 out once all are ready.
+            println!("<Santa> Now showing out elves!");
+            room_out_accept_n.send_recv(3).unwrap();
+            println!("<Santa> Elf group shown out!");
+        });
 
     // Enough reindeer are ready so let's deliver some presents.
     let reindeer_not_ready_clone = reindeer_not_ready.clone();
     let reindeer_waiting_clone = reindeer_waiting.clone();
-    santa.when(&reindeer_ready).and_recv(&wait_to_be_woken).then_do(move |_| {
-        let mut rng = rand::thread_rng();
+    santa
+        .when(&reindeer_ready)
+        .and_recv(&wait_to_be_woken)
+        .then_do(move |_| {
+            let mut rng = rand::thread_rng();
 
-        // Harness all 9 reindeer once they are all ready.
-        println!("<Santa> Woken by reindeer, now harnessing them!");
-        harness_accept_n.send_recv(9).unwrap();
-        println!("<Santa> Reindeer harnessed!");
+            // Harness all 9 reindeer once they are all ready.
+            println!("<Santa> Woken by reindeer, now harnessing them!");
+            harness_accept_n.send_recv(9).unwrap();
+            println!("<Santa> Reindeer harnessed!");
 
-        // Reindeer are harnessed, so they are no longer ready.
-        // Used for prioritisation.
-        reindeer_not_ready_clone.send(()).unwrap();
+            // Reindeer are harnessed, so they are no longer ready.
+            // Used for prioritisation.
+            reindeer_not_ready_clone.send(()).unwrap();
 
-        // Reset how many reindeer are waiting.
-        reindeer_waiting_clone.send(0).unwrap();
+            // Reset how many reindeer are waiting.
+            reindeer_waiting_clone.send(0).unwrap();
 
-        // Deliver toys with reindeer for 0 to 10 seconds, i.e. pause thread.
-        println!("<Santa> Now delivering toys!");
-        thread::sleep(Duration::from_secs(rng.gen_range(0, 10)));
-        println!("<Santa> Toys delivered!");
+            // Deliver toys with reindeer for 0 to 10 seconds, i.e. pause thread.
+            println!("<Santa> Now delivering toys!");
+            thread::sleep(Duration::from_secs(rng.gen_range(0, 10)));
+            println!("<Santa> Toys delivered!");
 
-        // Done delivering toys, unharness all 9 reindeer once all are ready.
-        println!("<Santa> Now unharnessing reindeer!");
-        unharness_accept_n.send_recv(9).unwrap();
-        println!("<Santa> Reindeer unharnessed!");
-    });
+            // Done delivering toys, unharness all 9 reindeer once all are ready.
+            println!("<Santa> Now unharnessing reindeer!");
+            unharness_accept_n.send_recv(9).unwrap();
+            println!("<Santa> Reindeer unharnessed!");
+        });
 
     // Clear the reindeer_not_ready message. Used for prioritisation.
-    santa.when(&reindeer_not_ready).and_recv(&clear_reindeer_not_ready).then_do(|_| {});
+    santa
+        .when(&reindeer_not_ready)
+        .and_recv(&clear_reindeer_not_ready)
+        .then_do(|_| {});
 
     /*******************************
      * Start North Pole Operations *
@@ -182,14 +200,22 @@ fn main() {
 
     // Spawn in the 10 elves and send the initial number of waiting ones.
     for i in 0..10 {
-        new_elf(elf_queue.clone(), room_in_entry.clone(), room_out_entry.clone());
+        new_elf(
+            elf_queue.clone(),
+            room_in_entry.clone(),
+            room_out_entry.clone(),
+        );
     }
     elves_waiting.send(0).unwrap();
 
     // Spawn in the 9 reindeer, send the initial number of waiting ones and
     // send that they are not ready yet.
     for i in 0..9 {
-        new_reindeer(reindeer_back.clone(), harness_entry.clone(), unharness_entry.clone());
+        new_reindeer(
+            reindeer_back.clone(),
+            harness_entry.clone(),
+            unharness_entry.clone(),
+        );
     }
     reindeer_waiting.send(0).unwrap();
     reindeer_not_ready.send(()).unwrap();
@@ -290,9 +316,7 @@ fn new_reindeer(
 }
 
 // Set up a private Junction for a rendezvous and return the public channels.
-pub fn rendezvous() -> (
-    ControllerHandle, BidirChannel<u32, ()>, RecvChannel<()>
-) {
+pub fn rendezvous() -> (ControllerHandle, BidirChannel<u32, ()>, RecvChannel<()>) {
     let mut j = Junction::new();
 
     // Asynchronous token channel to carry the state.
