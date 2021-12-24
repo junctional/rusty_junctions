@@ -135,7 +135,7 @@
 // mod bag;
 pub mod channels;
 mod controller;
-mod counter;
+// mod counter;
 mod function_transforms;
 mod inverted_index;
 mod junction;

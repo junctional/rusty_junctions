@@ -6,7 +6,7 @@ use std::thread;
 use std::{cmp::Ordering, collections::HashMap, collections::LinkedList, vec::Vec};
 
 use bag::Bag;
-use super::counter::Counter;
+use counter::Counter;
 use super::inverted_index::InvertedIndex;
 use super::types::ids::{ChannelId, JoinPatternId};
 use super::types::{ControllerHandle, JoinPattern, Message, Packet};

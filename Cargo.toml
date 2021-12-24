@@ -12,6 +12,7 @@ categories = ["concurrency"]
 
 [dependencies]
 bag = { path = "bag" }
+counter = { path = "counter" }
 
 [dev-dependencies]
 rand = "0.7.3"
