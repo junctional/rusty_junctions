@@ -132,12 +132,9 @@
 //! For more examples, visit the [`examples`](https://github.com/smueksch/rusty_junctions/tree/master/examples) folder in the [Rusty Junctions GitHub
 //! repository](https://github.com/smueksch/rusty_junctions).
 
-// mod bag;
 pub mod channels;
 mod controller;
-// mod counter;
 mod function_transforms;
-// mod inverted_index;
 mod junction;
 pub mod patterns;
 pub mod types;
