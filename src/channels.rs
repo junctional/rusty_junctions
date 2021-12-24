@@ -33,9 +33,9 @@ pub struct SendChannel<T> {
 
 impl<T> SendChannel<T> {
     /// Return the channel's ID.
-    pub(crate) fn id(&self) -> ids::ChannelId {
-        self.id
-    }
+    // pub(crate) fn id(&self) -> ids::ChannelId {
+    //     self.id
+    // }
 
     /// Return the ID of the `Junction` this channel is associated to.
     pub(crate) fn junction_id(&self) -> ids::JunctionId {
@@ -124,9 +124,9 @@ pub struct RecvChannel<R> {
 
 impl<R> RecvChannel<R> {
     /// Return the channel's ID.
-    pub(crate) fn id(&self) -> ids::ChannelId {
-        self.id
-    }
+    // pub(crate) fn id(&self) -> ids::ChannelId {
+    //     self.id
+    // }
 
     /// Return the ID of the `Junction` this channel is associated to.
     pub(crate) fn junction_id(&self) -> ids::JunctionId {
@@ -235,9 +235,9 @@ pub struct BidirChannel<T, R> {
 
 impl<T, R> BidirChannel<T, R> {
     /// Return the channel's ID.
-    pub(crate) fn id(&self) -> ids::ChannelId {
-        self.id
-    }
+    // pub(crate) fn id(&self) -> ids::ChannelId {
+    //     self.id
+    // }
 
     /// Return the ID of the `Junction` this channel is associated to.
     pub(crate) fn junction_id(&self) -> ids::JunctionId {

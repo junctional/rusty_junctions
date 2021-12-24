@@ -219,9 +219,9 @@ pub mod ids {
     pub struct ChannelId(usize);
 
     impl ChannelId {
-        pub(crate) fn new(value: usize) -> ChannelId {
-            ChannelId(value)
-        }
+        // pub(crate) fn new(value: usize) -> ChannelId {
+        //     ChannelId(value)
+        // }
 
         /// Increment the internal value of the channel ID.
         pub(crate) fn increment(&mut self) {
