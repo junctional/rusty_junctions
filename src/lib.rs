@@ -137,7 +137,7 @@ pub mod channels;
 mod controller;
 // mod counter;
 mod function_transforms;
-mod inverted_index;
+// mod inverted_index;
 mod junction;
 pub mod patterns;
 pub mod types;

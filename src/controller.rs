@@ -7,7 +7,7 @@ use std::{cmp::Ordering, collections::HashMap, collections::LinkedList, vec::Vec
 
 use bag::Bag;
 use counter::Counter;
-use super::inverted_index::InvertedIndex;
+use inverted_index::InvertedIndex;
 use super::types::ids::{ChannelId, JoinPatternId};
 use super::types::{ControllerHandle, JoinPattern, Message, Packet};
 

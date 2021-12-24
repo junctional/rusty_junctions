@@ -12,6 +12,7 @@ categories = ["concurrency"]
 
 [dependencies]
 bag = { path = "bag" }
+inverted-index = { path = "inverted-index" }
 counter = { path = "counter" }
 
 [dev-dependencies]
