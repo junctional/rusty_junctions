@@ -5,7 +5,7 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::{cmp::Ordering, collections::HashMap, collections::LinkedList, vec::Vec};
 
-use super::bag::Bag;
+use bag::Bag;
 use super::counter::Counter;
 use super::inverted_index::InvertedIndex;
 use super::types::ids::{ChannelId, JoinPatternId};

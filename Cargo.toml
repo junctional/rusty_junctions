@@ -11,6 +11,7 @@ keywords = ["join-pattern", "join-calculus", "concurrency"]
 categories = ["concurrency"]
 
 [dependencies]
+bag = { path = "bag" }
 
 [dev-dependencies]
 rand = "0.7.3"
