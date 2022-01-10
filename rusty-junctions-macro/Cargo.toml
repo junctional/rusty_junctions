@@ -6,4 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rusty-junctions-function-transformations = { path = "rusty-junctions-function-transformations" }
 rusty-junctions-utils = { path = "rusty-junctions-utils" }
