@@ -111,103 +111,14 @@ impl ControllerHandle {
 /// Function types related to various kind of functions that can be stored and
 /// executed with Join Patterns.
 pub mod functions {
-    use super::*;
+    // Types and Traits for functions which take one argument.
+    rusty_junctions_macro::function_types!(unary; 1);
 
-    /// Types and Traits for functions which take one argument.
-    pub mod unary {
-        use super::*;
+    // Types and Traits for functions which take two arguments.
+    rusty_junctions_macro::function_types!(binary; 2);
 
-        /// Trait to allow boxed up functions that take one `Message` and return
-        /// nothing to be cloned.
-        pub trait FnBoxClone: Fn(Message) -> () + Send {
-            fn clone_box(&self) -> Box<dyn FnBoxClone>;
-        }
-
-        impl<F> FnBoxClone for F
-        where
-            F: Fn(Message) -> () + Send + Clone + 'static,
-        {
-            /// Proxy function to be able to implement the `Clone` trait on
-            /// boxed up functions that take one `Message` and return nothing.
-            fn clone_box(&self) -> Box<dyn FnBoxClone> {
-                Box::new(self.clone())
-            }
-        }
-
-        impl Clone for Box<dyn FnBoxClone> {
-            fn clone(&self) -> Box<dyn FnBoxClone> {
-                (**self).clone_box()
-            }
-        }
-
-        /// Type alias for boxed up cloneable functions that take one `Message` and
-        /// return nothing. Mainly meant to increase readability of code.
-        pub type FnBox = Box<dyn FnBoxClone>;
-    }
-
-    /// Types and Traits for functions which take two arguments.
-    pub mod binary {
-        use super::*;
-
-        /// Trait to allow boxed up functions that take two `Message`s and return
-        /// nothing to be cloned.
-        pub trait FnBoxClone: Fn(Message, Message) -> () + Send {
-            fn clone_box(&self) -> Box<dyn FnBoxClone>;
-        }
-
-        impl<F> FnBoxClone for F
-        where
-            F: Fn(Message, Message) -> () + Send + Clone + 'static,
-        {
-            /// Proxy function to be able to implement the `Clone` trait on
-            /// boxed up functions that take two `Message`s and return nothing.
-            fn clone_box(&self) -> Box<dyn FnBoxClone> {
-                Box::new(self.clone())
-            }
-        }
-
-        impl Clone for Box<dyn FnBoxClone> {
-            fn clone(&self) -> Box<dyn FnBoxClone> {
-                (**self).clone_box()
-            }
-        }
-
-        /// Type alias for boxed up cloneable functions that take two `Message`s and
-        /// return nothing. Mainly meant to increase readability of code.
-        pub type FnBox = Box<dyn FnBoxClone>;
-    }
-
-    /// Types and Traits for functions which take three arguments.
-    pub mod ternary {
-        use super::*;
-
-        /// Trait to allow boxed up functions that take three `Message`s and return
-        /// nothing to be cloned.
-        pub trait FnBoxClone: Fn(Message, Message, Message) -> () + Send {
-            fn clone_box(&self) -> Box<dyn FnBoxClone>;
-        }
-
-        impl<F> FnBoxClone for F
-        where
-            F: Fn(Message, Message, Message) -> () + Send + Clone + 'static,
-        {
-            /// Proxy function to be able to implement the `Clone` trait on
-            /// boxed up functions that take three `Message`s and return nothing.
-            fn clone_box(&self) -> Box<dyn FnBoxClone> {
-                Box::new(self.clone())
-            }
-        }
-
-        impl Clone for Box<dyn FnBoxClone> {
-            fn clone(&self) -> Box<dyn FnBoxClone> {
-                (**self).clone_box()
-            }
-        }
-
-        /// Type alias for boxed up cloneable functions that take three `Message`s and
-        /// return nothing. Mainly meant to increase readability of code.
-        pub type FnBox = Box<dyn FnBoxClone>;
-    }
+    // Types and Traits for functions which take three arguments.
+    rusty_junctions_macro::function_types!(ternary; 3);
 }
 
 /// Adds specific ID types for the various IDs that are used in the crate.
