@@ -1,11 +1,11 @@
 //! Collection of types to increase readability and maintainability of the
 //! crate.
 
-use std::any::Any;
-use std::sync::mpsc::Sender;
-use std::thread::{JoinHandle, Thread};
-
-use crate::patterns;
+use std::{
+    any::Any,
+    sync::mpsc::Sender,
+    thread::{JoinHandle, Thread},
+};
 
 /// Shallow wrapper for a trait object using `Box` that can pass through thread
 /// boundaries.
@@ -51,23 +51,23 @@ pub enum Packet {
 /// `AddJoinPatternRequest` in a `Packet`.
 pub enum JoinPattern {
     /// Single channel Join Pattern.
-    UnarySend(patterns::unary::SendJoinPattern),
+    UnarySend(crate::patterns::unary::SendJoinPattern),
     /// Single `RecvChannel` Join Pattern.
-    UnaryRecv(patterns::unary::RecvJoinPattern),
+    UnaryRecv(crate::patterns::unary::RecvJoinPattern),
     /// Single `BidirChannel` Join Pattern.
-    UnaryBidir(patterns::unary::BidirJoinPattern),
+    UnaryBidir(crate::patterns::unary::BidirJoinPattern),
     /// Two `SendChannel` Join Pattern.
-    BinarySend(patterns::binary::SendJoinPattern),
+    BinarySend(crate::patterns::binary::SendJoinPattern),
     /// `SendChannel` and `RecvChannel` Join Pattern.
-    BinaryRecv(patterns::binary::RecvJoinPattern),
+    BinaryRecv(crate::patterns::binary::RecvJoinPattern),
     /// `SendChannel` and `BidirChannel` Join Pattern.
-    BinaryBidir(patterns::binary::BidirJoinPattern),
+    BinaryBidir(crate::patterns::binary::BidirJoinPattern),
     /// Three `SendChannel` Join Pattern.
-    TernarySend(patterns::ternary::SendJoinPattern),
+    TernarySend(crate::patterns::ternary::SendJoinPattern),
     /// Two `SendChannel` and `RecvChannel` Join Pattern.
-    TernaryRecv(patterns::ternary::RecvJoinPattern),
+    TernaryRecv(crate::patterns::ternary::RecvJoinPattern),
     /// Two `SendChannel` and `BidirChannel` Join Pattern.
-    TernaryBidir(patterns::ternary::BidirJoinPattern),
+    TernaryBidir(crate::patterns::ternary::BidirJoinPattern),
 }
 
 /// Handle to a `Junction`'s underlying `Controller`.
