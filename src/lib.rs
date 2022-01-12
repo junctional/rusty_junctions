@@ -135,6 +135,7 @@
 pub mod channels;
 mod controller;
 mod function_transforms;
+pub mod join_pattern;
 mod junction;
 pub mod patterns;
 pub mod types;
