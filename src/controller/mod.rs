@@ -14,9 +14,12 @@ use std::{
     thread,
 };
 
-use crate::types::{
-    ids::{ChannelId, JoinPatternId},
-    JoinPattern, Message, Packet,
+use crate::{
+    join_pattern::JoinPattern,
+    types::{
+        ids::{ChannelId, JoinPatternId},
+        Message, Packet,
+    },
 };
 
 use bag::Bag;

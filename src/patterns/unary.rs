@@ -8,7 +8,8 @@ use crate::{
         StrippedSendChannel,
     },
     function_transforms,
-    types::{functions, ids, JoinPattern, Message, Packet},
+    join_pattern::JoinPattern,
+    types::{functions, ids, Message, Packet},
 };
 
 /**********************************

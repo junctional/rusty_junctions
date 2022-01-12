@@ -5,9 +5,10 @@ use std::{
 
 use crate::{
     controller::Controller,
+    join_pattern::JoinPattern,
     types::{
         ids::{ChannelId, JoinPatternId},
-        JoinPattern, Message, Packet,
+        Message, Packet,
     },
 };
 

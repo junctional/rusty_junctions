@@ -5,7 +5,8 @@ use std::thread;
 use crate::{
     channels::{StrippedBidirChannel, StrippedRecvChannel, StrippedSendChannel},
     function_transforms,
-    types::{functions, ids, JoinPattern, Message, Packet},
+    join_pattern::JoinPattern,
+    types::{functions, ids, Message, Packet},
 };
 
 /****************************************
