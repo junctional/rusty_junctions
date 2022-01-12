@@ -16,5 +16,6 @@ inverted-index = { path = "inverted-index" }
 counter = { path = "counter" }
 rusty-junctions-macro = { path = "rusty-junctions-macro" }
 
+itertools = "0.10.3"
 [dev-dependencies]
 rand = "0.7.3"
