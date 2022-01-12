@@ -2,14 +2,18 @@
 //! together. Main structure for the public interface, used to create new
 //! channels and construct `JoinPattern`s based on them.
 
-use std::any::Any;
-use std::ops::Drop;
-use std::sync::mpsc::{channel, RecvError, Sender};
+use std::{
+    any::Any,
+    ops::Drop,
+    sync::mpsc::{channel, RecvError, Sender},
+};
 
-use super::channels::{BidirChannel, RecvChannel, SendChannel};
-use super::controller::Controller;
-use super::patterns::unary::{BidirPartialPattern, RecvPartialPattern, SendPartialPattern};
-use super::types::{ids, ControllerHandle, Packet};
+use crate::{
+    channels::{BidirChannel, RecvChannel, SendChannel},
+    controller::{Controller, ControllerHandle},
+    patterns::unary::{BidirPartialPattern, RecvPartialPattern, SendPartialPattern},
+    types::{ids, Packet},
+};
 
 /// Struct managing the creation of new channels and Join Patterns.
 ///
@@ -128,7 +132,9 @@ impl Junction {
 
         id_receiver.recv()
     }
+}
 
+impl Junction {
     /// Create new partial Join Pattern starting with a `SendChannel`.
     ///
     /// # Panics
