@@ -2,6 +2,8 @@
 //! crate.
 
 use std::{any::Any, sync::mpsc::Sender};
+use crate::types::ids::ChannelId;
+use bag::Bag;
 
 /// Shallow wrapper for a trait object using `Box` that can pass through thread
 /// boundaries.
@@ -45,6 +47,7 @@ pub enum Packet {
 
 /// Enum defining all Join Patterns that can be added to a Junction using the
 /// `AddJoinPatternRequest` in a `Packet`.
+// pub struct JoinPattern<T: crate::join_pattern::JoinPattern>(T);
 pub enum JoinPattern {
     /// Single channel Join Pattern.
     UnarySend(crate::patterns::unary::SendJoinPattern),
@@ -64,6 +67,38 @@ pub enum JoinPattern {
     TernaryRecv(crate::patterns::ternary::RecvJoinPattern),
     /// Two `SendChannel` and `BidirChannel` Join Pattern.
     TernaryBidir(crate::patterns::ternary::BidirJoinPattern),
+}
+
+impl JoinPattern {
+    /// Return `true` if the Join Pattern with given `JoinPatternId` is alive.
+    ///
+    /// A Join Pattern is considered alive if there is at least one `Message` for
+    /// each of the channels involved in it.
+    // TODO: Ensure this is a valid implementation of `is_valid` for any number of channels
+    pub fn is_alive(&self, messages: &Bag<ChannelId, Message>) -> bool {
+        use itertools::Itertools;
+        use JoinPattern::*;
+        let channels = match self {
+            UnarySend(jp) => jp.channels(),
+            UnaryRecv(jp) => jp.channels(),
+            UnaryBidir(jp) => jp.channels(),
+            BinarySend(jp) => jp.channels(),
+            BinaryRecv(jp) => jp.channels(),
+            BinaryBidir(jp) => jp.channels(),
+            TernarySend(jp) => jp.channels(),
+            TernaryRecv(jp) => jp.channels(),
+            TernaryBidir(jp) => jp.channels(),
+        };
+
+        for (key, group) in &channels.into_iter().group_by(|chan| *chan) {
+            let messages_for_channel = messages.count_items(&key);
+            if messages_for_channel < group.collect::<Vec<ChannelId>>().len() {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 /// Function types related to various kind of functions that can be stored and

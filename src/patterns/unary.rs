@@ -173,6 +173,10 @@ impl SendJoinPattern {
         SendJoinPattern { channel_id, f }
     }
 
+    pub(crate) fn channels(&self) -> Vec<ids::ChannelId> {
+        vec![self.channel_id]
+    }
+
     /// Return the ID of the channel in this Join Pattern.
     pub(crate) fn channel_id(&self) -> ids::ChannelId {
         self.channel_id
@@ -253,6 +257,10 @@ impl RecvJoinPattern {
         RecvJoinPattern { channel_id, f }
     }
 
+    pub(crate) fn channels(&self) -> Vec<ids::ChannelId> {
+        vec![self.channel_id]
+    }
+
     /// Return the ID of the channel in this Join Pattern.
     pub(crate) fn channel_id(&self) -> ids::ChannelId {
         self.channel_id
@@ -328,6 +336,10 @@ pub struct BidirJoinPattern {
 impl BidirJoinPattern {
     pub(crate) fn new(channel_id: ids::ChannelId, f: functions::unary::FnBox) -> BidirJoinPattern {
         BidirJoinPattern { channel_id, f }
+    }
+
+    pub(crate) fn channels(&self) -> Vec<ids::ChannelId> {
+        vec![self.channel_id]
     }
 
     /// Return the ID of the channel in this Join Pattern.
