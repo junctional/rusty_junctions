@@ -100,82 +100,11 @@ impl Controller {
     /// `InvertedIndex` for future look-up operations and then stored in the
     /// Join Pattern collection.
     fn insert_join_pattern(&mut self, join_pattern_id: JoinPatternId, join_pattern: JoinPattern) {
-        use JoinPattern::*;
-
-        match join_pattern {
-            UnarySend(jp) => {
-                self.join_pattern_index
-                    .insert_single(jp.channel_id(), join_pattern_id);
-
-                self.join_patterns.insert(join_pattern_id, UnarySend(jp));
-            }
-            UnaryRecv(jp) => {
-                self.join_pattern_index
-                    .insert_single(jp.channel_id(), join_pattern_id);
-
-                self.join_patterns.insert(join_pattern_id, UnaryRecv(jp));
-            }
-            UnaryBidir(jp) => {
-                self.join_pattern_index
-                    .insert_single(jp.channel_id(), join_pattern_id);
-
-                self.join_patterns.insert(join_pattern_id, UnaryBidir(jp));
-            }
-            BinarySend(jp) => {
-                self.join_pattern_index
-                    .insert_single(jp.first_send_channel_id(), join_pattern_id);
-                self.join_pattern_index
-                    .insert_single(jp.second_send_channel_id(), join_pattern_id);
-
-                self.join_patterns.insert(join_pattern_id, BinarySend(jp));
-            }
-            BinaryRecv(jp) => {
-                self.join_pattern_index
-                    .insert_single(jp.send_channel_id(), join_pattern_id);
-                self.join_pattern_index
-                    .insert_single(jp.recv_channel_id(), join_pattern_id);
-
-                self.join_patterns.insert(join_pattern_id, BinaryRecv(jp));
-            }
-            BinaryBidir(jp) => {
-                self.join_pattern_index
-                    .insert_single(jp.send_channel_id(), join_pattern_id);
-                self.join_pattern_index
-                    .insert_single(jp.bidir_channel_id(), join_pattern_id);
-
-                self.join_patterns.insert(join_pattern_id, BinaryBidir(jp));
-            }
-            TernarySend(jp) => {
-                self.join_pattern_index
-                    .insert_single(jp.first_send_channel_id(), join_pattern_id);
-                self.join_pattern_index
-                    .insert_single(jp.second_send_channel_id(), join_pattern_id);
-                self.join_pattern_index
-                    .insert_single(jp.third_send_channel_id(), join_pattern_id);
-
-                self.join_patterns.insert(join_pattern_id, TernarySend(jp));
-            }
-            TernaryRecv(jp) => {
-                self.join_pattern_index
-                    .insert_single(jp.first_send_channel_id(), join_pattern_id);
-                self.join_pattern_index
-                    .insert_single(jp.second_send_channel_id(), join_pattern_id);
-                self.join_pattern_index
-                    .insert_single(jp.recv_channel_id(), join_pattern_id);
-
-                self.join_patterns.insert(join_pattern_id, TernaryRecv(jp));
-            }
-            TernaryBidir(jp) => {
-                self.join_pattern_index
-                    .insert_single(jp.first_send_channel_id(), join_pattern_id);
-                self.join_pattern_index
-                    .insert_single(jp.second_send_channel_id(), join_pattern_id);
-                self.join_pattern_index
-                    .insert_single(jp.bidir_channel_id(), join_pattern_id);
-
-                self.join_patterns.insert(join_pattern_id, TernaryBidir(jp));
-            }
-        }
+        join_pattern.channels().iter().for_each(|chan| {
+            self.join_pattern_index
+                .insert_single(*chan, join_pattern_id)
+        });
+        self.join_patterns.insert(join_pattern_id, join_pattern);
     }
 
     /// Generate new, *unique* `ChannelId`.
