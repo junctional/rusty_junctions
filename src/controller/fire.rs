@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use crate::{
     controller::Controller,
-    types::{ids::JoinPatternId, JoinPattern},
+    types::{ids::JoinPatternId, Message},
 };
 
 impl Controller {
@@ -84,78 +84,15 @@ impl Controller {
     /// Panics when there is no `JoinPattern` stored for the given
     /// `JoinPatternId`.
     pub(in crate::controller) fn fire_join_pattern(&mut self, join_pattern_id: JoinPatternId) {
-        use JoinPattern::*;
-
         let join_pattern = self.join_patterns.get(&join_pattern_id).unwrap();
 
-        match join_pattern {
-            UnarySend(jp) => {
-                let arg = self.messages.retrieve(&jp.channel_id()).unwrap();
-
-                jp.fire(arg);
-            }
-            UnaryRecv(jp) => {
-                let return_sender = self.messages.retrieve(&jp.channel_id()).unwrap();
-
-                jp.fire(return_sender);
-            }
-            UnaryBidir(jp) => {
-                let arg_and_sender = self.messages.retrieve(&jp.channel_id()).unwrap();
-
-                jp.fire(arg_and_sender);
-            }
-            BinarySend(jp) => {
-                let arg_1 = self.messages.retrieve(&jp.first_send_channel_id()).unwrap();
-                let arg_2 = self
-                    .messages
-                    .retrieve(&jp.second_send_channel_id())
-                    .unwrap();
-
-                jp.fire(arg_1, arg_2);
-            }
-            BinaryRecv(jp) => {
-                let arg = self.messages.retrieve(&jp.send_channel_id()).unwrap();
-                let return_sender = self.messages.retrieve(&jp.recv_channel_id()).unwrap();
-
-                jp.fire(arg, return_sender);
-            }
-            BinaryBidir(jp) => {
-                let arg_1 = self.messages.retrieve(&jp.send_channel_id()).unwrap();
-                let arg_2_and_sender = self.messages.retrieve(&jp.bidir_channel_id()).unwrap();
-
-                jp.fire(arg_1, arg_2_and_sender);
-            }
-            TernarySend(jp) => {
-                let arg_1 = self.messages.retrieve(&jp.first_send_channel_id()).unwrap();
-                let arg_2 = self
-                    .messages
-                    .retrieve(&jp.second_send_channel_id())
-                    .unwrap();
-                let arg_3 = self.messages.retrieve(&jp.third_send_channel_id()).unwrap();
-
-                jp.fire(arg_1, arg_2, arg_3);
-            }
-            TernaryRecv(jp) => {
-                let arg_1 = self.messages.retrieve(&jp.first_send_channel_id()).unwrap();
-                let arg_2 = self
-                    .messages
-                    .retrieve(&jp.second_send_channel_id())
-                    .unwrap();
-                let return_sender = self.messages.retrieve(&jp.recv_channel_id()).unwrap();
-
-                jp.fire(arg_1, arg_2, return_sender);
-            }
-            TernaryBidir(jp) => {
-                let arg_1 = self.messages.retrieve(&jp.first_send_channel_id()).unwrap();
-                let arg_2 = self
-                    .messages
-                    .retrieve(&jp.second_send_channel_id())
-                    .unwrap();
-                let arg_3_and_sender = self.messages.retrieve(&jp.bidir_channel_id()).unwrap();
-
-                jp.fire(arg_1, arg_2, arg_3_and_sender);
-            }
+        let mut messages_for_channels: Vec<Message> = Vec::new();
+        for chan in join_pattern.channels() {
+            let message = self.messages.retrieve(&chan).unwrap();
+            messages_for_channels.push(message);
         }
+
+        join_pattern.fire(messages_for_channels);
     }
 
     /// Reset the `Counter` at which the given Join Pattern has last been fired.

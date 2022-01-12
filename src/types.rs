@@ -98,6 +98,20 @@ impl JoinPattern {
         }
 
         true
+    pub fn fire(&self, mut messages: Vec<Message>) {
+        // TODO: Find a better way of doing this, consider using `swap_remove`
+        use JoinPattern::*;
+        match self {
+            UnarySend(jp) => jp.fire(messages.remove(0)),
+            UnaryRecv(jp) => jp.fire(messages.remove(0)),
+            UnaryBidir(jp) => jp.fire(messages.remove(0)),
+            BinarySend(jp) => jp.fire(messages.remove(0), messages.remove(0)),
+            BinaryRecv(jp) => jp.fire(messages.remove(0), messages.remove(0)),
+            BinaryBidir(jp) => jp.fire(messages.remove(0), messages.remove(0)),
+            TernarySend(jp) => jp.fire(messages.remove(0), messages.remove(0), messages.remove(0)),
+            TernaryRecv(jp) => jp.fire(messages.remove(0), messages.remove(0), messages.remove(0)),
+            TernaryBidir(jp) => jp.fire(messages.remove(0), messages.remove(0), messages.remove(0)),
+        };
     }
 }
 
