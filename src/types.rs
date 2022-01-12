@@ -1,9 +1,9 @@
 //! Collection of types to increase readability and maintainability of the
 //! crate.
 
-use std::{any::Any, sync::mpsc::Sender};
 use crate::types::ids::ChannelId;
 use bag::Bag;
+use std::{any::Any, sync::mpsc::Sender};
 
 /// Shallow wrapper for a trait object using `Box` that can pass through thread
 /// boundaries.
@@ -77,6 +77,20 @@ impl JoinPattern {
     // TODO: Ensure this is a valid implementation of `is_valid` for any number of channels
     pub fn is_alive(&self, messages: &Bag<ChannelId, Message>) -> bool {
         use itertools::Itertools;
+        let channels = self.channels();
+
+        for (key, group) in &channels.into_iter().group_by(|chan| *chan) {
+            let messages_for_channel = messages.count_items(&key);
+            if messages_for_channel < group.collect::<Vec<ChannelId>>().len() {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    /// Return a `Vec<ChannelId` for each of the channels in the Join Pattern
+    pub fn channels(&self) -> Vec<ChannelId> {
         use JoinPattern::*;
         let channels = match self {
             UnarySend(jp) => jp.channels(),
@@ -90,14 +104,9 @@ impl JoinPattern {
             TernaryBidir(jp) => jp.channels(),
         };
 
-        for (key, group) in &channels.into_iter().group_by(|chan| *chan) {
-            let messages_for_channel = messages.count_items(&key);
-            if messages_for_channel < group.collect::<Vec<ChannelId>>().len() {
-                return false;
-            }
-        }
+        channels
+    }
 
-        true
     pub fn fire(&self, mut messages: Vec<Message>) {
         // TODO: Find a better way of doing this, consider using `swap_remove`
         use JoinPattern::*;
