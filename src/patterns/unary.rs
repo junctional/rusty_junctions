@@ -178,11 +178,6 @@ impl SendJoinPattern {
         vec![self.channel_id]
     }
 
-    /// Return the ID of the channel in this Join Pattern.
-    pub(crate) fn channel_id(&self) -> ids::ChannelId {
-        self.channel_id
-    }
-
     /// Fire Join Pattern by running associated function in separate thread.
     pub(crate) fn fire(&self, arg: Message) {
         let f_clone = self.f.clone();
@@ -262,11 +257,6 @@ impl RecvJoinPattern {
         vec![self.channel_id]
     }
 
-    /// Return the ID of the channel in this Join Pattern.
-    pub(crate) fn channel_id(&self) -> ids::ChannelId {
-        self.channel_id
-    }
-
     /// Fire Join Pattern by running associated function in separate thread.
     pub(crate) fn fire(&self, return_sender: Message) {
         let f_clone = self.f.clone();
@@ -341,11 +331,6 @@ impl BidirJoinPattern {
 
     pub(crate) fn channels(&self) -> Vec<ids::ChannelId> {
         vec![self.channel_id]
-    }
-
-    /// Return the ID of the channel in this Join Pattern.
-    pub(crate) fn channel_id(&self) -> ids::ChannelId {
-        self.channel_id
     }
 
     /// Fire Join Pattern by running associated function in separate thread.

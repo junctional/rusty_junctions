@@ -15,6 +15,7 @@ use crate::{
 
 /// Three `SendChannel` partial Join Pattern.
 pub struct SendPartialPattern<T, U, V> {
+    #[allow(dead_code)]
     junction_id: ids::JunctionId,
     first_send_channel: StrippedSendChannel<T>,
     second_send_channel: StrippedSendChannel<U>,
@@ -101,21 +102,6 @@ impl SendJoinPattern {
             self.second_send_channel_id,
             self.third_send_channel_id,
         ]
-    }
-
-    /// Return the ID of the first `SendChannel` in this Join Pattern.
-    pub(crate) fn first_send_channel_id(&self) -> ids::ChannelId {
-        self.first_send_channel_id
-    }
-
-    /// Return the ID of the second `SendChannel` in this Join Pattern.
-    pub(crate) fn second_send_channel_id(&self) -> ids::ChannelId {
-        self.second_send_channel_id
-    }
-
-    /// Return the ID of the third `SendChannel` in this Join Pattern.
-    pub(crate) fn third_send_channel_id(&self) -> ids::ChannelId {
-        self.third_send_channel_id
     }
 
     /// Fire Join Pattern by running associated function in separate thread.
@@ -223,21 +209,6 @@ impl RecvJoinPattern {
         ]
     }
 
-    /// Return the ID of first `SendChannel` in this `JoinPattern`.
-    pub(crate) fn first_send_channel_id(&self) -> ids::ChannelId {
-        self.first_send_channel_id
-    }
-
-    /// Return the ID of second `SendChannel` in this `JoinPattern`.
-    pub(crate) fn second_send_channel_id(&self) -> ids::ChannelId {
-        self.second_send_channel_id
-    }
-
-    /// Return the ID of the `RecvChannel` in this `JoinPattern`.
-    pub(crate) fn recv_channel_id(&self) -> ids::ChannelId {
-        self.recv_channel_id
-    }
-
     /// Fire `JoinPattern` by running associated function in separate thread.
     pub(crate) fn fire(&self, arg_1: Message, arg_2: Message, return_sender: Message) {
         let f_clone = self.f.clone();
@@ -338,21 +309,6 @@ impl BidirJoinPattern {
             self.second_send_channel_id,
             self.bidir_channel_id,
         ]
-    }
-
-    /// Return the ID of first `SendChannel` in this Join Pattern.
-    pub(crate) fn first_send_channel_id(&self) -> ids::ChannelId {
-        self.first_send_channel_id
-    }
-
-    /// Return the ID of second `SendChannel` in this Join Pattern.
-    pub(crate) fn second_send_channel_id(&self) -> ids::ChannelId {
-        self.second_send_channel_id
-    }
-
-    /// Return the ID of the `BidirChannel` in this Join Pattern.
-    pub(crate) fn bidir_channel_id(&self) -> ids::ChannelId {
-        self.bidir_channel_id
     }
 
     /// Fire Join Pattern by running associated function in separate thread.
