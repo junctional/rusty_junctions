@@ -12,13 +12,13 @@ use crate::{
     },
 };
 
-impl Controller {
+impl<JP: JoinPattern> Controller<JP> {
     /// Handle incoming `Packet` from associated `Junction`.
     ///
     /// This function will continuously receive `Packet`s sent from structs
     /// associated with the `Junction` that created and started this `Controller`
     /// until a `Packet::ShutDownRequest` has been sent.
-    pub(in crate::controller) fn handle_packets(&mut self, receiver: Receiver<Packet>) {
+    pub(in crate::controller) fn handle_packets(&mut self, receiver: Receiver<Packet<JP>>) {
         use Packet::*;
 
         while let Ok(packet) = receiver.recv() {
@@ -79,7 +79,7 @@ impl Controller {
     }
 
     /// Add new Join Pattern to `Controller` storage.
-    fn handle_add_join_pattern_request(&mut self, join_pattern: JoinPattern) {
+    fn handle_add_join_pattern_request(&mut self, join_pattern: JP) {
         let jp_id = self.new_join_pattern_id();
 
         self.initialize_last_fired(jp_id);
@@ -100,7 +100,7 @@ impl Controller {
     /// The given Join Pattern needs to be registered within the internal
     /// `InvertedIndex` for future look-up operations and then stored in the
     /// Join Pattern collection.
-    fn insert_join_pattern(&mut self, join_pattern_id: JoinPatternId, join_pattern: JoinPattern) {
+    fn insert_join_pattern(&mut self, join_pattern_id: JoinPatternId, join_pattern: JP) {
         join_pattern.channels().iter().for_each(|chan| {
             self.join_pattern_index
                 .insert_single(*chan, join_pattern_id)

@@ -32,7 +32,7 @@ use inverted_index::InvertedIndex;
 /// `JoinPattern`s once all requirements have been met. It is created by a
 /// `Junction` in a separate control thread, where it continuously listens
 /// for `Packet`s sent by user code and reacts accordingly.
-pub(crate) struct Controller {
+pub(crate) struct Controller<JP: JoinPattern> {
     latest_channel_id: ChannelId,
     latest_join_pattern_id: JoinPatternId,
     /// Counter for how many messages have arrived since creation.
@@ -41,7 +41,7 @@ pub(crate) struct Controller {
     messages: Bag<ChannelId, Message>,
     /// Collection of all available Join Patterns for the `Junction` associated with
     /// this `Controller`.
-    join_patterns: HashMap<JoinPatternId, JoinPattern>,
+    join_patterns: HashMap<JoinPatternId, JP>,
     /// Map of `JoinPatternId`s to the message count at which they were last
     /// fired, `None` if the Join Pattern has never been fired. Used to
     /// determine precedence of Join Patterns that have not been fired in a
@@ -53,8 +53,8 @@ pub(crate) struct Controller {
     join_pattern_index: InvertedIndex<ChannelId, JoinPatternId>,
 }
 
-impl Controller {
-    pub(crate) fn new() -> Controller {
+impl<JP: JoinPattern + Sized> Controller<JP> {
+    pub(crate) fn new() -> Controller<JP> {
         Controller {
             latest_channel_id: ChannelId::default(),
             latest_join_pattern_id: JoinPatternId::default(),
@@ -74,9 +74,9 @@ impl Controller {
     /// point.
     pub(crate) fn start(
         mut self,
-        sender: Sender<Packet>,
-        receiver: Receiver<Packet>,
-    ) -> ControllerHandle {
+        sender: Sender<Packet<JP>>,
+        receiver: Receiver<Packet<JP>>,
+    ) -> ControllerHandle<JP> {
         ControllerHandle::new(sender, thread::spawn(move || self.handle_packets(receiver)))
     }
 }

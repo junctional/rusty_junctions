@@ -21,10 +21,10 @@ pub struct SendPartialPattern<T, U> {
     junction_id: ids::JunctionId,
     first_send_channel: StrippedSendChannel<T>,
     second_send_channel: StrippedSendChannel<U>,
-    sender: Sender<Packet>,
+    sender: Sender<Packet<SendJoinPattern>>,
 }
 
-impl<T, U> SendPartialPattern<T, U>
+impl<T, U, JP: JoinPattern> SendPartialPattern<T, U>
 where
     T: Any + Send,
     U: Any + Send,
@@ -33,7 +33,7 @@ where
         junction_id: ids::JunctionId,
         first_send_channel: StrippedSendChannel<T>,
         second_send_channel: StrippedSendChannel<U>,
-        sender: Sender<Packet>,
+        sender: Sender<Packet<SendJoinPattern>>,
     ) -> SendPartialPattern<T, U> {
         SendPartialPattern {
             junction_id,
@@ -55,7 +55,7 @@ where
     /// and is associated with the same `Junction`.
     pub fn and<V>(
         self,
-        send_channel: &SendChannel<V>,
+        send_channel: &SendChannel<V, JP>,
     ) -> super::ternary::SendPartialPattern<T, U, V>
     where
         V: Any + Send,
@@ -90,7 +90,7 @@ where
     /// and is associated with the same `Junction`.
     pub fn and_recv<R>(
         self,
-        recv_channel: &RecvChannel<R>,
+        recv_channel: &RecvChannel<R, JP>,
     ) -> super::ternary::RecvPartialPattern<T, U, R>
     where
         R: Any + Send,
@@ -124,7 +124,7 @@ where
     /// and is associated with the same `Junction`.
     pub fn and_bidir<V, R>(
         self,
-        bidir_channel: &BidirChannel<V, R>,
+        bidir_channel: &BidirChannel<V, R, JP>,
     ) -> super::ternary::BidirPartialPattern<T, U, V, R>
     where
         V: Any + Send,
@@ -162,15 +162,13 @@ where
     where
         F: Fn(T, U) -> () + Send + Clone + 'static,
     {
-        let join_pattern = JoinPattern::BinarySend(SendJoinPattern::new(
-            self.first_send_channel.id(),
-            self.second_send_channel.id(),
-            function_transforms::binary::transform_send(f),
-        ));
+        let join_pattern = SendJoinPattern {
+            first_send_channel_id: self.first_send_channel.id(),
+            second_send_channel_id: self.second_send_channel.id(),
+            f: function_transforms::binary::transform_send(f),
+        };
 
-        self.sender
-            .send(Packet::AddJoinPatternRequest { join_pattern })
-            .unwrap();
+        join_pattern.add(self.sender);
     }
 }
 
@@ -181,29 +179,17 @@ pub struct SendJoinPattern {
     f: functions::binary::FnBox,
 }
 
-impl SendJoinPattern {
-    pub(crate) fn new(
-        first_send_channel_id: ids::ChannelId,
-        second_send_channel_id: ids::ChannelId,
-        f: functions::binary::FnBox,
-    ) -> SendJoinPattern {
-        SendJoinPattern {
-            first_send_channel_id,
-            second_send_channel_id,
-            f,
-        }
-    }
-
-    pub(crate) fn channels(&self) -> Vec<ids::ChannelId> {
+impl JoinPattern for SendJoinPattern {
+    fn channels(&self) -> Vec<ids::ChannelId> {
         vec![self.first_send_channel_id, self.second_send_channel_id]
     }
 
     /// Fire Join Pattern by running associated function in separate thread.
-    pub(crate) fn fire(&self, arg_1: Message, arg_2: Message) {
+    fn fire(&self, messages: Vec<Message>) {
         let f_clone = self.f.clone();
 
         thread::spawn(move || {
-            (*f_clone)(arg_1, arg_2);
+            (*f_clone)(messages.remove(0), messages.remove(0));
         });
     }
 }
@@ -216,7 +202,7 @@ impl SendJoinPattern {
 pub struct RecvPartialPattern<T, R> {
     send_channel: StrippedSendChannel<T>,
     recv_channel: StrippedRecvChannel<R>,
-    sender: Sender<Packet>,
+    sender: Sender<Packet<RecvJoinPattern>>,
 }
 
 impl<T, R> RecvPartialPattern<T, R>
@@ -227,7 +213,7 @@ where
     pub(crate) fn new(
         send_channel: StrippedSendChannel<T>,
         recv_channel: StrippedRecvChannel<R>,
-        sender: Sender<Packet>,
+        sender: Sender<Packet<RecvJoinPattern>>,
     ) -> RecvPartialPattern<T, R> {
         RecvPartialPattern {
             send_channel,
@@ -251,15 +237,13 @@ where
     where
         F: Fn(T) -> R + Send + Clone + 'static,
     {
-        let join_pattern = JoinPattern::BinaryRecv(RecvJoinPattern::new(
-            self.send_channel.id(),
-            self.recv_channel.id(),
-            function_transforms::binary::transform_recv(f),
-        ));
+        let join_pattern = RecvJoinPattern {
+            send_channel_id: self.send_channel.id(),
+            recv_channel_id: self.recv_channel.id(),
+            f: function_transforms::binary::transform_recv(f),
+        };
 
-        self.sender
-            .send(Packet::AddJoinPatternRequest { join_pattern })
-            .unwrap();
+        join_pattern.add(self.sender);
     }
 }
 
@@ -274,29 +258,17 @@ pub struct RecvJoinPattern {
     f: functions::binary::FnBox,
 }
 
-impl RecvJoinPattern {
-    pub(crate) fn new(
-        send_channel_id: ids::ChannelId,
-        recv_channel_id: ids::ChannelId,
-        f: functions::binary::FnBox,
-    ) -> RecvJoinPattern {
-        RecvJoinPattern {
-            send_channel_id,
-            recv_channel_id,
-            f,
-        }
-    }
-
-    pub(crate) fn channels(&self) -> Vec<ids::ChannelId> {
+impl JoinPattern for RecvJoinPattern {
+    fn channels(&self) -> Vec<ids::ChannelId> {
         vec![self.send_channel_id, self.recv_channel_id]
     }
 
     /// Fire Join Pattern by running associated function in separate thread.
-    pub(crate) fn fire(&self, msg: Message, return_sender: Message) {
+    fn fire(&self, messages: Vec<Message>) {
         let f_clone = self.f.clone();
 
         thread::spawn(move || {
-            (*f_clone)(msg, return_sender);
+            (*f_clone)(messages.remove(0), messages.remove(0));
         });
     }
 }
@@ -309,7 +281,7 @@ impl RecvJoinPattern {
 pub struct BidirPartialPattern<T, U, R> {
     send_channel: StrippedSendChannel<T>,
     bidir_channel: StrippedBidirChannel<U, R>,
-    sender: Sender<Packet>,
+    sender: Sender<Packet<BidirJoinPattern>>,
 }
 
 impl<T, U, R> BidirPartialPattern<T, U, R>
@@ -321,7 +293,7 @@ where
     pub(crate) fn new(
         send_channel: StrippedSendChannel<T>,
         bidir_channel: StrippedBidirChannel<U, R>,
-        sender: Sender<Packet>,
+        sender: Sender<Packet<BidirJoinPattern>>,
     ) -> BidirPartialPattern<T, U, R> {
         BidirPartialPattern {
             send_channel,
@@ -345,15 +317,13 @@ where
     where
         F: Fn(T, U) -> R + Send + Clone + 'static,
     {
-        let join_pattern = JoinPattern::BinaryBidir(BidirJoinPattern::new(
-            self.send_channel.id(),
-            self.bidir_channel.id(),
-            function_transforms::binary::transform_bidir(f),
-        ));
+        let join_pattern = BidirJoinPattern {
+            send_channel_id: self.send_channel.id(),
+            bidir_channel_id: self.bidir_channel.id(),
+            f: function_transforms::binary::transform_bidir(f),
+        };
 
-        self.sender
-            .send(Packet::AddJoinPatternRequest { join_pattern })
-            .unwrap();
+        join_pattern.add(self.sender);
     }
 }
 
@@ -364,29 +334,17 @@ pub struct BidirJoinPattern {
     f: functions::binary::FnBox,
 }
 
-impl BidirJoinPattern {
-    pub(crate) fn new(
-        send_channel_id: ids::ChannelId,
-        bidir_channel_id: ids::ChannelId,
-        f: functions::binary::FnBox,
-    ) -> BidirJoinPattern {
-        BidirJoinPattern {
-            send_channel_id,
-            bidir_channel_id,
-            f,
-        }
-    }
-
-    pub(crate) fn channels(&self) -> Vec<ids::ChannelId> {
+impl JoinPattern for BidirJoinPattern {
+    fn channels(&self) -> Vec<ids::ChannelId> {
         vec![self.send_channel_id, self.bidir_channel_id]
     }
 
     /// Fire Join Pattern by running associated function in separate thread.
-    pub(crate) fn fire(&self, arg_1: Message, arg_2_and_sender: Message) {
+    fn fire(&self, messages: Vec<Message>) {
         let f_clone = self.f.clone();
 
         thread::spawn(move || {
-            (*f_clone)(arg_1, arg_2_and_sender);
+            (*f_clone)(messages.remove(0), messages.remove(0));
         });
     }
 }
