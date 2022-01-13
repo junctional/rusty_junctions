@@ -3,20 +3,20 @@ use std::{
     thread::{JoinHandle, Thread},
 };
 
-use crate::{join_pattern::JoinPattern, types::Packet};
+use crate::types::Packet;
 
 /// Handle to a `Junction`'s underlying `Controller`.
 ///
 /// This struct carries a `JoinHandle` to the thread that the `Controller` of
 /// a `Junction` is running in. It allows for the `Controller` and its thread
 /// to be stopped gracefully at any point.
-pub struct ControllerHandle<JP: JoinPattern> {
-    sender: Sender<Packet<JP>>,
+pub struct ControllerHandle {
+    sender: Sender<Packet>,
     control_thread_handle: Option<JoinHandle<()>>,
 }
 
-impl<JP: JoinPattern> ControllerHandle<JP> {
-    pub(crate) fn new(sender: Sender<Packet<JP>>, handle: JoinHandle<()>) -> ControllerHandle<JP> {
+impl ControllerHandle {
+    pub(crate) fn new(sender: Sender<Packet>, handle: JoinHandle<()>) -> ControllerHandle {
         ControllerHandle {
             sender,
             control_thread_handle: Some(handle),

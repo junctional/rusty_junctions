@@ -1,8 +1,12 @@
 use std::collections::LinkedList;
 
-use crate::{controller::Controller, types::ids::JoinPatternId, join_pattern::JoinPattern};
+use crate::{
+    controller::Controller,
+    // join_pattern::JoinPattern,
+    types::ids::JoinPatternId,
+};
 
-impl<JP: JoinPattern> Controller<JP> {
+impl Controller {
     /// Return the `JoinPatternId`s of all alive `JoinPattern`s.
     ///
     /// A `JoinPattern` is considered alive if for each of the channels

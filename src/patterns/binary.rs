@@ -21,10 +21,10 @@ pub struct SendPartialPattern<T, U> {
     junction_id: ids::JunctionId,
     first_send_channel: StrippedSendChannel<T>,
     second_send_channel: StrippedSendChannel<U>,
-    sender: Sender<Packet<SendJoinPattern>>,
+    sender: Sender<Packet>,
 }
 
-impl<T, U, JP: JoinPattern> SendPartialPattern<T, U>
+impl<T, U: JoinPattern> SendPartialPattern<T, U>
 where
     T: Any + Send,
     U: Any + Send,
@@ -33,7 +33,7 @@ where
         junction_id: ids::JunctionId,
         first_send_channel: StrippedSendChannel<T>,
         second_send_channel: StrippedSendChannel<U>,
-        sender: Sender<Packet<SendJoinPattern>>,
+        sender: Sender<Packet>,
     ) -> SendPartialPattern<T, U> {
         SendPartialPattern {
             junction_id,
@@ -55,7 +55,7 @@ where
     /// and is associated with the same `Junction`.
     pub fn and<V>(
         self,
-        send_channel: &SendChannel<V, JP>,
+        send_channel: &SendChannel<V>,
     ) -> super::ternary::SendPartialPattern<T, U, V>
     where
         V: Any + Send,
@@ -90,7 +90,7 @@ where
     /// and is associated with the same `Junction`.
     pub fn and_recv<R>(
         self,
-        recv_channel: &RecvChannel<R, JP>,
+        recv_channel: &RecvChannel<R>,
     ) -> super::ternary::RecvPartialPattern<T, U, R>
     where
         R: Any + Send,
@@ -124,7 +124,7 @@ where
     /// and is associated with the same `Junction`.
     pub fn and_bidir<V, R>(
         self,
-        bidir_channel: &BidirChannel<V, R, JP>,
+        bidir_channel: &BidirChannel<V, R>,
     ) -> super::ternary::BidirPartialPattern<T, U, V, R>
     where
         V: Any + Send,
@@ -202,7 +202,7 @@ impl JoinPattern for SendJoinPattern {
 pub struct RecvPartialPattern<T, R> {
     send_channel: StrippedSendChannel<T>,
     recv_channel: StrippedRecvChannel<R>,
-    sender: Sender<Packet<RecvJoinPattern>>,
+    sender: Sender<Packet>,
 }
 
 impl<T, R> RecvPartialPattern<T, R>
@@ -213,7 +213,7 @@ where
     pub(crate) fn new(
         send_channel: StrippedSendChannel<T>,
         recv_channel: StrippedRecvChannel<R>,
-        sender: Sender<Packet<RecvJoinPattern>>,
+        sender: Sender<Packet>,
     ) -> RecvPartialPattern<T, R> {
         RecvPartialPattern {
             send_channel,
@@ -281,7 +281,7 @@ impl JoinPattern for RecvJoinPattern {
 pub struct BidirPartialPattern<T, U, R> {
     send_channel: StrippedSendChannel<T>,
     bidir_channel: StrippedBidirChannel<U, R>,
-    sender: Sender<Packet<BidirJoinPattern>>,
+    sender: Sender<Packet>,
 }
 
 impl<T, U, R> BidirPartialPattern<T, U, R>
@@ -293,7 +293,7 @@ where
     pub(crate) fn new(
         send_channel: StrippedSendChannel<T>,
         bidir_channel: StrippedBidirChannel<U, R>,
-        sender: Sender<Packet<BidirJoinPattern>>,
+        sender: Sender<Packet>,
     ) -> BidirPartialPattern<T, U, R> {
         BidirPartialPattern {
             send_channel,

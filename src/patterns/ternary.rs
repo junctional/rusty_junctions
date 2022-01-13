@@ -20,7 +20,7 @@ pub struct SendPartialPattern<T, U, V> {
     first_send_channel: StrippedSendChannel<T>,
     second_send_channel: StrippedSendChannel<U>,
     third_send_channel: StrippedSendChannel<V>,
-    sender: Sender<Packet<SendJoinPattern>>,
+    sender: Sender<Packet>,
 }
 
 impl<T, U, V> SendPartialPattern<T, U, V>
@@ -34,7 +34,7 @@ where
         first_send_channel: StrippedSendChannel<T>,
         second_send_channel: StrippedSendChannel<U>,
         third_send_channel: StrippedSendChannel<V>,
-        sender: Sender<Packet<SendJoinPattern>>,
+        sender: Sender<Packet>,
     ) -> SendPartialPattern<T, U, V> {
         SendPartialPattern {
             junction_id,
@@ -107,7 +107,7 @@ pub struct RecvPartialPattern<T, U, R> {
     first_send_channel: StrippedSendChannel<T>,
     second_send_channel: StrippedSendChannel<U>,
     recv_channel: StrippedRecvChannel<R>,
-    sender: Sender<Packet<RecvJoinPattern>>,
+    sender: Sender<Packet>,
 }
 
 impl<T, U, R> RecvPartialPattern<T, U, R>
@@ -120,7 +120,7 @@ where
         first_send_channel: StrippedSendChannel<T>,
         second_send_channel: StrippedSendChannel<U>,
         recv_channel: StrippedRecvChannel<R>,
-        sender: Sender<Packet<RecvJoinPattern>>,
+        sender: Sender<Packet>,
     ) -> RecvPartialPattern<T, U, R> {
         RecvPartialPattern {
             first_send_channel,
@@ -196,7 +196,7 @@ pub struct BidirPartialPattern<T, U, V, R> {
     first_send_channel: StrippedSendChannel<T>,
     second_send_channel: StrippedSendChannel<U>,
     bidir_channel: StrippedBidirChannel<V, R>,
-    sender: Sender<Packet<BidirJoinPattern>>,
+    sender: Sender<Packet>,
 }
 
 impl<T, U, V, R> BidirPartialPattern<T, U, V, R>
@@ -210,7 +210,7 @@ where
         first_send_channel: StrippedSendChannel<T>,
         second_send_channel: StrippedSendChannel<U>,
         bidir_channel: StrippedBidirChannel<V, R>,
-        sender: Sender<Packet<BidirJoinPattern>>,
+        sender: Sender<Packet>,
     ) -> BidirPartialPattern<T, U, V, R> {
         BidirPartialPattern {
             first_send_channel,

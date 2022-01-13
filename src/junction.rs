@@ -11,7 +11,7 @@ use std::{
 use crate::{
     channels::{BidirChannel, RecvChannel, SendChannel},
     controller::{Controller, ControllerHandle},
-    join_pattern::JoinPattern,
+    // join_pattern::JoinPattern,
     patterns::unary::{BidirPartialPattern, RecvPartialPattern, SendPartialPattern},
     types::{ids, Packet},
 };
@@ -24,21 +24,21 @@ use crate::{
 /// `Junction`. It also offers methods to start off the creation of new
 /// Join Patterns that rely on the channels created by this struct and can,
 /// in fact, only consist of channels associated with this struct.
-pub struct Junction<JP: JoinPattern> {
+pub struct Junction {
     id: ids::JunctionId,
-    controller_handle: Option<ControllerHandle<JP>>,
-    sender: Sender<Packet<JP>>,
+    controller_handle: Option<ControllerHandle>,
+    sender: Sender<Packet>,
 }
 
 #[allow(clippy::new_without_default)]
-impl<JP: JoinPattern> Junction<JP> {
+impl Junction {
     /// Create a new `Junction` and start control thread in background.
     ///
     /// Create a new `Junction` and spawn a control thread in the background
     /// that will handle all incoming `Packet`s for this `Junction`. A
     /// `JoinHandle` to this control thread is stored alongside the `Junction`.
-    pub fn new() -> Junction<JP> {
-        let (sender, receiver) = channel::<Packet<JP>>();
+    pub fn new() -> Junction {
+        let (sender, receiver) = channel::<Packet>();
 
         let controller = Controller::new();
 
@@ -62,7 +62,7 @@ impl<JP: JoinPattern> Junction<JP> {
     /// upon going out of scope.
     ///
     /// Note that this handle can only be retrieved once.
-    pub fn controller_handle(&mut self) -> Option<ControllerHandle<JP>> {
+    pub fn controller_handle(&mut self) -> Option<ControllerHandle> {
         self.controller_handle.take()
     }
 
@@ -75,7 +75,7 @@ impl<JP: JoinPattern> Junction<JP> {
     ///
     /// Panics if it received an error while trying to receive a new
     /// channel ID from the control thread.
-    pub fn send_channel<T>(&self) -> SendChannel<T, JP>
+    pub fn send_channel<T>(&self) -> SendChannel<T>
     where
         T: Any + Send,
     {
@@ -91,7 +91,7 @@ impl<JP: JoinPattern> Junction<JP> {
     ///
     /// Panics if it received an error while trying to receive a new
     /// channel ID from the control thread.
-    pub fn recv_channel<R>(&self) -> RecvChannel<R, JP>
+    pub fn recv_channel<R>(&self) -> RecvChannel<R>
     where
         R: Any + Send,
     {
@@ -108,7 +108,7 @@ impl<JP: JoinPattern> Junction<JP> {
     ///
     /// Panics if it received an error while trying to receive the new
     /// channel IDs from the control thread.
-    pub fn bidir_channel<T, R>(&self) -> BidirChannel<T, R, JP>
+    pub fn bidir_channel<T, R>(&self) -> BidirChannel<T, R>
     where
         T: Any + Send,
         R: Any + Send,
@@ -135,7 +135,7 @@ impl<JP: JoinPattern> Junction<JP> {
     }
 }
 
-impl<JP: JoinPattern> Junction<JP> {
+impl Junction {
     /// Create new partial Join Pattern starting with a `SendChannel`.
     ///
     /// # Panics
@@ -143,7 +143,7 @@ impl<JP: JoinPattern> Junction<JP> {
     /// Panics if the supplied `SendChannel` does not carry the same
     /// `JunctionID` as this `Junction`, i.e. has not been created by and is
     /// associated with this `Junction`.
-    pub fn when<T>(&self, send_channel: &SendChannel<T, JP>) -> SendPartialPattern<T>
+    pub fn when<T>(&self, send_channel: &SendChannel<T>) -> SendPartialPattern<T>
     where
         T: Any + Send,
     {
@@ -165,7 +165,7 @@ impl<JP: JoinPattern> Junction<JP> {
     /// Panics if the supplied `RecvChannel` does not carry the same
     /// `JunctionID` as this `Junction`, i.e. has not been created by and is
     /// associated with this `Junction`.
-    pub fn when_recv<R>(&self, recv_channel: &RecvChannel<R, JP>) -> RecvPartialPattern<R>
+    pub fn when_recv<R>(&self, recv_channel: &RecvChannel<R>) -> RecvPartialPattern<R>
     where
         R: Any + Send,
     {
@@ -187,7 +187,7 @@ impl<JP: JoinPattern> Junction<JP> {
     /// Panics if the supplied `BidirChannel` does not carry the same
     /// `JunctionID` as this `Junction`, i.e. has not been created by and is
     /// associated with this `Junction`.
-    pub fn when_bidir<T, R>(&self, bidir_channel: &BidirChannel<T, R, JP>) -> BidirPartialPattern<T, R>
+    pub fn when_bidir<T, R>(&self, bidir_channel: &BidirChannel<T, R>) -> BidirPartialPattern<T, R>
     where
         T: Any + Send,
         R: Any + Send,
@@ -204,7 +204,7 @@ impl<JP: JoinPattern> Junction<JP> {
     }
 }
 
-impl<JP: JoinPattern> Drop for Junction<JP> {
+impl Drop for Junction {
     /// Drop the `Junction` and free its resources.
     ///
     /// If there is a `ControllerHandle` still available, use it to stop the

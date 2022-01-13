@@ -2,11 +2,11 @@ use std::cmp::Ordering;
 
 use crate::{
     controller::Controller,
-    join_pattern::JoinPattern,
+    // join_pattern::JoinPattern,
     types::{ids::JoinPatternId, Message},
 };
 
-impl<JP: JoinPattern> Controller<JP> {
+impl Controller {
     /// Select which `JoinPattern` should be fired.
     ///
     /// In order to avoid certain scenarious in which one `JoinPattern` would

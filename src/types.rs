@@ -27,7 +27,7 @@ impl Message {
 
 /// Standardized packet to be used to send messages of various types on the
 /// channels of a Junction.
-pub enum Packet<JP: JoinPattern> {
+pub enum Packet {
     /// General message send from channel identified by `channel_id`.
     Message {
         channel_id: ids::ChannelId,
@@ -39,7 +39,8 @@ pub enum Packet<JP: JoinPattern> {
         return_sender: Sender<ids::ChannelId>,
     },
     /// Request adding a new Join Pattern to the Junction.
-    AddJoinPatternRequest { join_pattern: JP },
+    // TODO: Currently dynamic dispatch is being used
+    AddJoinPatternRequest { join_pattern: Box<dyn JoinPattern> },
     /// Request the internal control thread managing the `Message`s to shut down.
     ShutDownRequest,
 }
