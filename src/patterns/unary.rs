@@ -1,4 +1,5 @@
 use std::{any::Any, sync::mpsc::Sender, thread};
+use rusty_junctions_macro::JoinPattern;
 
 use crate::{
     channels::{
@@ -7,13 +8,14 @@ use crate::{
     },
     function_transforms,
     join_pattern::JoinPattern,
-    types::{functions, ids, Message, Packet},
+    types::{ids, Message, Packet},
 };
 
 /**********************************
  * Send Join Pattern Construction *
  **********************************/
 
+#[derive(JoinPattern)]
 /// `SendChannel` partial Join Pattern.
 pub struct SendPartialPattern<T> {
     junction_id: ids::JunctionId,
@@ -151,7 +153,7 @@ where
         F: Fn(T) -> () + Send + Clone + 'static,
     {
         let join_pattern = SendJoinPattern {
-            channel_id: self.send_channel.id(),
+            send_channel: self.send_channel.id(),
             f: function_transforms::unary::transform_send(f),
         };
 
@@ -159,31 +161,11 @@ where
     }
 }
 
-/// `SendChannel` full Join Pattern.
-pub struct SendJoinPattern {
-    channel_id: ids::ChannelId,
-    f: functions::unary::FnBox,
-}
-
-impl JoinPattern for SendJoinPattern {
-    fn channels(&self) -> Vec<ids::ChannelId> {
-        vec![self.channel_id]
-    }
-
-    /// Fire Join Pattern by running associated function in separate thread.
-    fn fire(&self, mut messages: Vec<Message>) {
-        let f_clone = self.f.clone();
-
-        thread::spawn(move || {
-            (*f_clone)(messages.remove(0));
-        });
-    }
-}
-
 /*************************************
  * Receive Join Pattern Construction *
  *************************************/
 
+#[derive(JoinPattern)]
 /// `RecvChannel` partial Join Pattern.
 pub struct RecvPartialPattern<R> {
     recv_channel: StrippedRecvChannel<R>,
@@ -220,7 +202,7 @@ where
         F: Fn() -> R + Send + Clone + 'static,
     {
         let join_pattern = RecvJoinPattern {
-            channel_id: self.recv_channel.id(),
+            recv_channel: self.recv_channel.id(),
             f: function_transforms::unary::transform_recv(f),
         };
 
@@ -228,35 +210,11 @@ where
     }
 }
 
-/// `RecvChannel` full Join Pattern.
-///
-/// N.B.: While this struct appears to be a duplicate of `SendJoinPattern`
-/// in terms of code, it is used to distinguish the capability of the
-/// Join Pattern within the `Junction` through its type.
-pub struct RecvJoinPattern {
-    channel_id: ids::ChannelId,
-    f: functions::unary::FnBox,
-}
-
-impl JoinPattern for RecvJoinPattern {
-    fn channels(&self) -> Vec<ids::ChannelId> {
-        vec![self.channel_id]
-    }
-
-    /// Fire Join Pattern by running associated function in separate thread.
-    fn fire(&self, mut messages: Vec<Message>) {
-        let f_clone = self.f.clone();
-
-        thread::spawn(move || {
-            (*f_clone)(messages.remove(0));
-        });
-    }
-}
-
 /*******************************************
  * Bidirectional Join Pattern Construction *
  *******************************************/
 
+#[derive(JoinPattern)]
 /// Bidirectional channel partial Join Pattern.
 pub struct BidirPartialPattern<T, R> {
     bidir_channel: StrippedBidirChannel<T, R>,
@@ -294,31 +252,10 @@ where
         F: Fn(T) -> R + Send + Clone + 'static,
     {
         let join_pattern = BidirJoinPattern {
-            channel_id: self.bidir_channel.id(),
+            bidir_channel: self.bidir_channel.id(),
             f: function_transforms::unary::transform_bidir(f),
         };
 
         join_pattern.add(self.sender);
-    }
-}
-
-/// `BidirChannel` full Join Pattern.
-pub struct BidirJoinPattern {
-    channel_id: ids::ChannelId,
-    f: functions::unary::FnBox,
-}
-
-impl JoinPattern for BidirJoinPattern {
-    fn channels(&self) -> Vec<ids::ChannelId> {
-        vec![self.channel_id]
-    }
-
-    /// Fire Join Pattern by running associated function in separate thread.
-    fn fire(&self, mut messages: Vec<Message>) {
-        let f_clone = self.f.clone();
-
-        thread::spawn(move || {
-            (*f_clone)(messages.remove(0));
-        });
     }
 }
