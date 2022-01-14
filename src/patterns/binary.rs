@@ -24,7 +24,7 @@ pub struct SendPartialPattern<T, U> {
     sender: Sender<Packet>,
 }
 
-impl<T, U: JoinPattern> SendPartialPattern<T, U>
+impl<T, U> SendPartialPattern<T, U>
 where
     T: Any + Send,
     U: Any + Send,
@@ -185,7 +185,7 @@ impl JoinPattern for SendJoinPattern {
     }
 
     /// Fire Join Pattern by running associated function in separate thread.
-    fn fire(&self, messages: Vec<Message>) {
+    fn fire(&self, mut messages: Vec<Message>) {
         let f_clone = self.f.clone();
 
         thread::spawn(move || {
@@ -264,7 +264,7 @@ impl JoinPattern for RecvJoinPattern {
     }
 
     /// Fire Join Pattern by running associated function in separate thread.
-    fn fire(&self, messages: Vec<Message>) {
+    fn fire(&self, mut messages: Vec<Message>) {
         let f_clone = self.f.clone();
 
         thread::spawn(move || {
@@ -340,7 +340,7 @@ impl JoinPattern for BidirJoinPattern {
     }
 
     /// Fire Join Pattern by running associated function in separate thread.
-    fn fire(&self, messages: Vec<Message>) {
+    fn fire(&self, mut messages: Vec<Message>) {
         let f_clone = self.f.clone();
 
         thread::spawn(move || {

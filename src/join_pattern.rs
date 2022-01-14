@@ -6,7 +6,7 @@ use std::{
     sync::mpsc::Sender,
 };
 
-pub trait JoinPattern {
+pub trait JoinPattern: Send {
     /// Return `true` if the Join Pattern with given `JoinPatternId` is alive.
     ///
     /// A Join Pattern is considered alive if there is at least one `Message` for

@@ -89,7 +89,7 @@ impl JoinPattern for SendJoinPattern {
     }
 
     /// Fire Join Pattern by running associated function in separate thread.
-    fn fire(&self, messages: Vec<Message>) {
+    fn fire(&self, mut messages: Vec<Message>) {
         let f_clone = self.f.clone();
 
         thread::spawn(move || {
@@ -178,7 +178,7 @@ impl JoinPattern for RecvJoinPattern {
     }
 
     /// Fire `JoinPattern` by running associated function in separate thread.
-    fn fire(&self, messages: Vec<Message>) {
+    fn fire(&self, mut messages: Vec<Message>) {
         let f_clone = self.f.clone();
 
         thread::spawn(move || {
@@ -264,7 +264,7 @@ impl JoinPattern for BidirJoinPattern {
     }
 
     /// Fire Join Pattern by running associated function in separate thread.
-    fn fire(&self, messages: Vec<Message>) {
+    fn fire(&self, mut messages: Vec<Message>) {
         let f_clone = self.f.clone();
 
         thread::spawn(move || {
