@@ -9,3 +9,4 @@ edition = "2021"
 rusty-junctions-function-types = { path = "rusty-junctions-function-types" }
 rusty-junctions-function-transformations = { path = "rusty-junctions-function-transformations" }
 rusty-junctions-utils = { path = "rusty-junctions-utils" }
+rusty-junctions-join-pattern-derive = { path = "rusty-junctions-join-pattern-derive" }
