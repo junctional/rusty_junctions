@@ -13,7 +13,6 @@ pub fn join_pattern(input: TokenStream) -> TokenStream {
 
     let join_pattern_name = ident.to_string().replace("Partial", "Join");
     let join_pattern_name = Ident::new(&join_pattern_name, Span::call_site());
-    // let join_pattern_name = Ident::new(&format!("Gen{}", join_pattern_name), Span::call_site());
 
     let fields: Vec<Field> = match data {
         Data::Struct(DataStruct {
@@ -48,16 +47,16 @@ pub fn join_pattern(input: TokenStream) -> TokenStream {
             f: crate::types::functions::#module_name::FnBox,
         }
 
-        impl JoinPattern for #join_pattern_name {
+        impl crate::join_pattern::JoinPattern for #join_pattern_name {
             fn channels(&self) -> Vec<crate::types::ids::ChannelId> {
                 vec![ #( self.#channel_fields ,)* ]
             }
 
             /// Fire Join Pattern by running associated function in separate thread.
-            fn fire(&self, mut messages: Vec<Message>) {
+            fn fire(&self, mut messages: Vec<crate::types::Message>) {
                 let f_clone = self.f.clone();
 
-                thread::spawn(move || {
+                std::thread::spawn(move || {
                     (*f_clone)( #( #function_args ,)* );
                 });
             }
