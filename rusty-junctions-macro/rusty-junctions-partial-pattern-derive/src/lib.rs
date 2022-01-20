@@ -8,67 +8,17 @@ use syn::{
 
 mod channels;
 
-#[derive(Debug, Clone)]
-struct JoinPattern {
-    pub name: String,
-    pub ident: Ident,
-}
-
-impl JoinPattern {
-    pub fn from_partial_pattern_name(partial_pattern_name: &Ident) -> Self {
-        let name = partial_pattern_name
-            .to_string()
-            .replace("PartialPattern", "JoinPattern");
-        let ident = Ident::new(&name, Span::call_site());
-
-        Self {
-            name,
-            ident,
-        }
-    }
-
-    pub fn transform_function(&self) -> TokenStream2 {
-        match self.name.as_str() {
-            "SendJoinPattern" => quote!(transform_send(f)),
-            "RecvJoinPattern" => quote!(transform_recv(f)),
-            "BidirJoinPattern" => quote!(transform_bidir(f)),
-            _ => panic!("Unsuppoted Module"),
-        }
-    }
-
-    pub fn requires_junction_id(&self) -> bool {
-        match self.name.as_str() {
-            "SendJoinPattern" => true,
-            _not_send_pattern => false,
-        }
-    }
-}
-
-struct Module {
-    // pub name: String,
-    pub ident: Ident,
-}
-
-impl Module {
-    pub fn from_usize(number: usize) -> Self {
-        let name = match number {
-            0 => panic!("Invalid number of fields"),
-            1 => "unary".to_string(),
-            2 => "binary".to_string(),
-            3 => "ternary".to_string(),
-            n => format!("n{}ary", n),
-        };
-        let ident = Ident::new(&name, Span::call_site());
-
-        Self {
-            // name,
-            ident,
-        }
-    }
-}
-
 #[proc_macro_derive(TerminalPartialPattern)]
 pub fn terminal_partial_pattern(input: TokenStream) -> TokenStream {
+    derive_pattern(input, true)
+}
+
+#[proc_macro_derive(PartialPattern)]
+pub fn partial_pattern(input: TokenStream) -> TokenStream {
+    derive_pattern(input, false)
+}
+
+fn derive_pattern(input: TokenStream, is_terminal_pattern: bool) -> TokenStream {
     let DeriveInput {
         ident,
         data,
@@ -91,7 +41,9 @@ pub fn terminal_partial_pattern(input: TokenStream) -> TokenStream {
     } = channels::ParsedChannels::from_fields(fields);
 
     let channel_number = field_names.len();
-    let module_name = Module::from_usize(channel_number).ident;
+    let mut module = Module::from_usize(channel_number);
+    let module_name = module.ident();
+    let next_module_name = module.next().expect("Will always be higher module").name();
 
     let new_method = new_method(
         &partial_pattern_name,
@@ -111,6 +63,37 @@ pub fn terminal_partial_pattern(input: TokenStream) -> TokenStream {
         transform_function,
     );
 
+    let and_method_fn = (!is_terminal_pattern).then(|| {
+        and_method(
+            "and",
+            &next_module_name,
+            "send_channel",
+            "Send",
+            &generic_type_parameters,
+            &field_names,
+        )
+    });
+    let and_recv_method_fn = (!is_terminal_pattern).then(|| {
+        and_method(
+            "recv",
+            &next_module_name,
+            "recv_channel",
+            "Recv",
+            &generic_type_parameters,
+            &field_names,
+        )
+    });
+    let and_bidir_method_fn = (!is_terminal_pattern).then(|| {
+        and_method(
+            "bidir",
+            &next_module_name,
+            "bidir_channel",
+            "Bidir",
+            &generic_type_parameters,
+            &field_names,
+        )
+    });
+
     let output = quote! {
         impl< #( #generic_type_parameters ,)* > #partial_pattern_name < #( #generic_type_parameters ,)* >
         where
@@ -118,6 +101,9 @@ pub fn terminal_partial_pattern(input: TokenStream) -> TokenStream {
         {
             #new_method
             #then_do_method
+            #and_method_fn
+            #and_recv_method_fn
+            #and_bidir_method_fn
         }
     };
 
@@ -143,6 +129,56 @@ fn then_do_method(
             };
 
             join_pattern.add(self.sender);
+        }
+    }
+}
+
+fn and_method(
+    specific_method: &str,
+    next_module: &str,
+    channel_name: &str,
+    pattern_type: &str,
+    generic_type_parameters: &Vec<Ident>,
+    channel_names: &Vec<TokenStream2>,
+) -> TokenStream2 {
+    let method_name = Ident::new(specific_method, Span::call_site());
+    let next_module = Ident::new(next_module, Span::call_site());
+    let channel_name = Ident::new(channel_name, Span::call_site());
+    let channel_type = Ident::new(&format!("{}Channel", pattern_type), Span::call_site());
+    let created_partial_pattern = Ident::new(
+        &format!("{}PartialPattern", pattern_type),
+        Span::call_site(),
+    );
+    let junction_id = match pattern_type {
+        "Send" => Some(quote!(self.junction_id,)),
+        _not_send_channel => None,
+    };
+
+    let method_generic_param = match pattern_type {
+        "Bidir" => vec![
+            Ident::new("A", Span::call_site()),
+            Ident::new("AA", Span::call_site()),
+        ],
+        _not_bidir => vec![Ident::new("A", Span::call_site())],
+    };
+
+    quote! {
+        pub fn #method_name< #( #method_generic_param ,)* >(
+            self,
+            #channel_name: &crate::channels::#channel_type<#( #method_generic_param ,)* >,
+        ) -> crate::patterns::#next_module::#created_partial_pattern< #( #generic_type_parameters ,)* #( #method_generic_param ,)* >
+        where
+            #( #method_generic_param: std::any::Any + std::marker::Send, )*
+        {
+            if #channel_name.junction_id() != self.junction_id {
+                panic!("A Join Pattern only supports channels from the same Junction");
+            }
+            super::#next_module::#created_partial_pattern::new(
+                #junction_id
+                #( self.#channel_names ,)*
+                #channel_name.strip(),
+                self.sender,
+            )
         }
     }
 }
@@ -192,4 +228,72 @@ fn generic_type_parameters(generics: Generics) -> Vec<Ident> {
             _ => None,
         })
         .collect::<Vec<Ident>>()
+}
+
+#[derive(Debug, Clone)]
+struct JoinPattern {
+    pub name: String,
+    pub ident: Ident,
+}
+
+impl JoinPattern {
+    pub fn from_partial_pattern_name(partial_pattern_name: &Ident) -> Self {
+        let name = partial_pattern_name
+            .to_string()
+            .replace("PartialPattern", "JoinPattern");
+        let ident = Ident::new(&name, Span::call_site());
+
+        Self { name, ident }
+    }
+
+    pub fn transform_function(&self) -> TokenStream2 {
+        match self.name.as_str() {
+            "SendJoinPattern" => quote!(transform_send(f)),
+            "RecvJoinPattern" => quote!(transform_recv(f)),
+            "BidirJoinPattern" => quote!(transform_bidir(f)),
+            _ => panic!("Unsuppoted Module"),
+        }
+    }
+
+    pub fn requires_junction_id(&self) -> bool {
+        match self.name.as_str() {
+            "SendJoinPattern" => true,
+            _not_send_pattern => false,
+        }
+    }
+}
+
+struct Module {
+    pub number: usize,
+}
+
+impl Module {
+    pub fn from_usize(number: usize) -> Self {
+        Self { number }
+    }
+
+    pub fn name(&self) -> String {
+        let name = match self.number {
+            0 => panic!("Invalid number of fields"),
+            1 => "unary".to_string(),
+            2 => "binary".to_string(),
+            3 => "ternary".to_string(),
+            n => format!("n{}ary", n),
+        };
+
+        name
+    }
+
+    pub fn ident(&self) -> Ident {
+        let name = self.name();
+        Ident::new(&name, Span::call_site())
+    }
+}
+
+impl std::iter::Iterator for Module {
+    type Item = Self;
+    fn next(&mut self) -> Option<<Self as std::iter::Iterator>::Item> {
+        let number = self.number + 1;
+        Some(Self { number })
+    }
 }
