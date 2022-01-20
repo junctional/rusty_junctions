@@ -97,7 +97,7 @@ fn derive_pattern(input: TokenStream, is_terminal_pattern: bool) -> TokenStream 
     let output = quote! {
         impl< #( #generic_type_parameters ,)* > #partial_pattern_name < #( #generic_type_parameters ,)* >
         where
-            #( #generic_type_parameters: std::any::Any + Send ,)*
+            #( #generic_type_parameters: std::any::Any + std::marker::Send ,)*
         {
             #new_method
             #then_do_method
@@ -121,7 +121,7 @@ fn then_do_method(
     quote! {
         pub fn then_do<F>(self, f: F)
         where
-            F: Fn( #( #function_args ,)* ) -> #return_type + Send + Clone + 'static,
+            F: Fn( #( #function_args ,)* ) -> #return_type + std::marker::Send + std::clone::Clone + 'static,
         {
             let join_pattern = #join_pattern_name {
                 #( #channel_names: self.#channel_names.id() ,)*
@@ -197,7 +197,7 @@ fn new_method(
     quote! {
         pub(crate) fn new(
             #junction_id_arg
-            #( #channel_names: #channel_types ,)*
+            #( #channel_names: crate::channels::#channel_types ,)*
             sender: std::sync::mpsc::Sender<crate::types::Packet>,
         ) -> #partial_pattern_name< #( #generic_type_parameters ,)* > {
             #partial_pattern_name {

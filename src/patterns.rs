@@ -1,7 +1,4 @@
 pub mod unary {
-    use crate::channels::StrippedBidirChannel;
-    use crate::channels::StrippedRecvChannel;
-    use crate::channels::StrippedSendChannel;
     use crate::join_pattern::JoinPattern;
 
     #[derive(rusty_junctions_macro::PartialPattern, rusty_junctions_macro::JoinPattern)]
@@ -28,9 +25,6 @@ pub mod unary {
 }
 
 pub mod binary {
-    use crate::channels::StrippedSendChannel;
-    use crate::channels::StrippedBidirChannel;
-    use crate::channels::StrippedRecvChannel;
     use crate::join_pattern::JoinPattern;
 
     #[derive(rusty_junctions_macro::PartialPattern, rusty_junctions_macro::JoinPattern)]
@@ -60,9 +54,6 @@ pub mod binary {
 }
 
 pub mod ternary {
-    use crate::channels::StrippedBidirChannel;
-    use crate::channels::StrippedRecvChannel;
-    use crate::channels::StrippedSendChannel;
     use crate::join_pattern::JoinPattern;
 
     #[derive(rusty_junctions_macro::TerminalPartialPattern, rusty_junctions_macro::JoinPattern)]
