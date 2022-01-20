@@ -79,7 +79,7 @@ impl Controller {
     }
 
     /// Add new Join Pattern to `Controller` storage.
-    fn handle_add_join_pattern_request(&mut self, join_pattern: JoinPattern) {
+    fn handle_add_join_pattern_request(&mut self, join_pattern: Box<dyn JoinPattern>) {
         let jp_id = self.new_join_pattern_id();
 
         self.initialize_last_fired(jp_id);
@@ -100,7 +100,11 @@ impl Controller {
     /// The given Join Pattern needs to be registered within the internal
     /// `InvertedIndex` for future look-up operations and then stored in the
     /// Join Pattern collection.
-    fn insert_join_pattern(&mut self, join_pattern_id: JoinPatternId, join_pattern: JoinPattern) {
+    fn insert_join_pattern(
+        &mut self,
+        join_pattern_id: JoinPatternId,
+        join_pattern: Box<dyn JoinPattern>,
+    ) {
         join_pattern.channels().iter().for_each(|chan| {
             self.join_pattern_index
                 .insert_single(*chan, join_pattern_id)

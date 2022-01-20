@@ -1,6 +1,10 @@
 use std::collections::LinkedList;
 
-use crate::{controller::Controller, types::ids::JoinPatternId};
+use crate::{
+    controller::Controller,
+    // join_pattern::JoinPattern,
+    types::ids::JoinPatternId,
+};
 
 impl Controller {
     /// Return the `JoinPatternId`s of all alive `JoinPattern`s.

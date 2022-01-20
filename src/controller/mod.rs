@@ -41,7 +41,7 @@ pub(crate) struct Controller {
     messages: Bag<ChannelId, Message>,
     /// Collection of all available Join Patterns for the `Junction` associated with
     /// this `Controller`.
-    join_patterns: HashMap<JoinPatternId, JoinPattern>,
+    join_patterns: HashMap<JoinPatternId, Box<dyn JoinPattern>>,
     /// Map of `JoinPatternId`s to the message count at which they were last
     /// fired, `None` if the Join Pattern has never been fired. Used to
     /// determine precedence of Join Patterns that have not been fired in a

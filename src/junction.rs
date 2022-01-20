@@ -11,6 +11,7 @@ use std::{
 use crate::{
     channels::{BidirChannel, RecvChannel, SendChannel},
     controller::{Controller, ControllerHandle},
+    // join_pattern::JoinPattern,
     patterns::unary::{BidirPartialPattern, RecvPartialPattern, SendPartialPattern},
     types::{ids, Packet},
 };
