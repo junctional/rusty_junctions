@@ -2,7 +2,7 @@
 //! crate.
 
 use crate::join_pattern::JoinPattern;
-use std::{any::Any, sync::mpsc::Sender, marker::Send};
+use std::{any::Any, marker::Send, sync::mpsc::Sender};
 
 /// Shallow wrapper for a trait object using `Box` that can pass through thread
 /// boundaries.
@@ -40,7 +40,9 @@ pub enum Packet {
     },
     /// Request adding a new Join Pattern to the Junction.
     // TODO: Currently dynamic dispatch is being used
-    AddJoinPatternRequest { join_pattern: Box<dyn JoinPattern + Send> },
+    AddJoinPatternRequest {
+        join_pattern: Box<dyn JoinPattern + Send>,
+    },
     /// Request the internal control thread managing the `Message`s to shut down.
     ShutDownRequest,
 }
