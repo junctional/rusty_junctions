@@ -1,14 +1,15 @@
-use std::sync::mpsc::Sender;
-use rusty_junctions_macro::{JoinPattern, TerminalPartialPattern};
 use crate::{
-    join_pattern::JoinPattern,
     channels::{StrippedBidirChannel, StrippedRecvChannel, StrippedSendChannel},
-    types::{Packet, ids::JunctionId},
+    join_pattern::JoinPattern,
+    types::{ids::JunctionId, Packet},
 };
+use rusty_junctions_macro::{JoinPattern, TerminalPartialPattern};
+use std::sync::mpsc::Sender;
 
 #[derive(TerminalPartialPattern, JoinPattern)]
 /// Three `SendChannel` partial Join Pattern.
 pub struct SendPartialPattern<T, U, V> {
+    #[allow(dead_code)]
     junction_id: JunctionId,
     first_send_channel: StrippedSendChannel<T>,
     second_send_channel: StrippedSendChannel<U>,
