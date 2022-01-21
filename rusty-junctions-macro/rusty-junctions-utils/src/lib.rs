@@ -1,3 +1,5 @@
+mod module;
+pub use crate::module::Module;
 /// Macro for defining the channels that are part of the Join Pattern
 #[macro_export]
 macro_rules! when {
