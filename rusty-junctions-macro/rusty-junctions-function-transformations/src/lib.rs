@@ -1,61 +1,43 @@
 use proc_macro::{self, TokenStream};
+use proc_macro2::Span;
 use quote::quote;
+use rusty_junctions_utils::Module;
 use syn::{
-    parse::{Parse, ParseStream},
     parse_macro_input,
-    punctuated::Punctuated,
-    Ident, Token, Type,
+    Ident,
 };
-
-struct FunctionTransformInput {
-    module_name: Ident,
-    types: Vec<Type>,
-}
-
-impl Parse for FunctionTransformInput {
-    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
-        if input.is_empty() {
-            panic!("Invalid input to macro function_transform");
-        }
-
-        let module_name: Ident = input.parse()?;
-        let _semi_colon_token: Token![;] = input.parse()?;
-        let types_tokens: Punctuated<Type, Token![,]> = input.parse_terminated(Type::parse)?;
-        let types = types_tokens.into_iter().collect();
-
-        Ok(FunctionTransformInput { module_name, types })
-    }
-}
 
 #[proc_macro]
 pub fn function_transform(input: TokenStream) -> TokenStream {
     use syn::__private::TokenStream2;
 
-    let FunctionTransformInput { module_name, types } = parse_macro_input!(input);
+    let module: Module = parse_macro_input!(input);
+    let module_name = module.ident();
+    let type_parameters = module.type_parameters();
 
-    let mut send_types: Vec<Type> = Vec::new();
+    let mut send_types: Vec<Ident> = Vec::new();
     let mut send_function_args: Vec<Ident> = Vec::new();
     let mut send_stmts: Vec<TokenStream2> = Vec::new();
 
-    let mut recv_types: Vec<Type> = Vec::new();
+    let mut recv_types: Vec<Ident> = Vec::new();
     let mut recv_function_args: Vec<Ident> = Vec::new();
     let mut recv_stmts: Vec<TokenStream2> = Vec::new();
 
-    for (i, t) in types.iter().enumerate() {
-        let send_arg_ident =
-            proc_macro2::Ident::new(&format!("arg_{}", i), proc_macro2::Span::call_site());
+    type_parameters.iter().enumerate().for_each(|(i, t)| {
+        let ty_ident = Ident::new(&t.to_string(), Span::call_site());
+
+        let send_arg_ident = Ident::new(&format!("arg_{}", i), Span::call_site());
         let send_arg_stmt = quote! {*#send_arg_ident.downcast::<#t>().unwrap()};
-        send_types.push(t.clone());
+        send_types.push(ty_ident.clone());
         send_function_args.push(send_arg_ident);
         send_stmts.push(send_arg_stmt);
 
-        let recv_arg_ident =
-            proc_macro2::Ident::new(&format!("arg_{}", i), proc_macro2::Span::call_site());
+        let recv_arg_ident = Ident::new(&format!("arg_{}", i), proc_macro2::Span::call_site());
         let recv_arg_stmt = quote! {*#recv_arg_ident.downcast::<#t>().unwrap()};
-        recv_types.push(t.clone());
+        recv_types.push(ty_ident.clone());
         recv_function_args.push(recv_arg_ident);
         recv_stmts.push(recv_arg_stmt);
-    }
+    });
 
     let last_type = recv_types.pop();
     recv_function_args.pop();
@@ -94,7 +76,7 @@ pub fn function_transform(input: TokenStream) -> TokenStream {
             }
 
             /// Transform function of `BidirJoinPattern` to use `Message` arguments.
-            pub(crate) fn transform_bidir<F, #(#types ,)* R>(f: F) -> Box<impl functions::#module_name::FnBoxClone>
+            pub(crate) fn transform_bidir<F, #(#type_parameters ,)* R>(f: F) -> Box<impl functions::#module_name::FnBoxClone>
             where
                 F: Fn( #(#send_types ,)* ) -> R + Send + Clone + 'static,
                 #(#send_types: Any + Send + 'static ,)*

@@ -33,6 +33,12 @@ impl Module {
         let name = self.name();
         Ident::new(&name, Span::call_site())
     }
+
+    pub fn type_parameters(&self) -> Vec<Ident> {
+        (1..=self.number())
+            .map(|n| Ident::new(&"A".repeat(n), Span::call_site()))
+            .collect::<Vec<Ident>>()
+    }
 }
 
 impl std::iter::Iterator for Module {
