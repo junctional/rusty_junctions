@@ -2,7 +2,7 @@
 name = "rusty-junctions"
 version = "0.1.0"
 authors = ["Sebastian Müksch <sebastian.mueksch@gmail.com>", "Kyle Cotton <kylecottonkc@gmail.com>"]
-edition = "2018"
+edition = "2021"
 description = "Join Pattern implementation in Rust."
 readme = "README.md"
 repository = "https://github.com/smueksch/rusty_junctions"
