@@ -2,7 +2,7 @@ use proc_macro::{self, TokenStream};
 use proc_macro2::Span;
 use quote::quote;
 use rusty_junctions_utils::Module;
-use syn::{parse_macro_input, Ident, Token, Type, LitBool,
+use syn::{parse_macro_input, Ident, Token, LitBool,
           parse::{Parse, ParseStream}};
 
 struct PatternInput {
