@@ -1,7 +1,7 @@
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::__private::TokenStream2;
 use rusty_junctions_utils::Module;
+use syn::__private::TokenStream2;
 
 pub fn function_types_from_module(module: Module) -> TokenStream2 {
     let module_name = module.ident();

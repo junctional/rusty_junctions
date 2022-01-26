@@ -1,12 +1,11 @@
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::{
-    Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed, GenericParam,
-    Generics, TypeParam, __private::TokenStream2,
-    AngleBracketedGenericArguments, GenericArgument, Path, PathArguments, PathSegment, Type,
-    TypePath,
-};
 use rusty_junctions_utils::Module;
+use syn::{
+    AngleBracketedGenericArguments, Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed,
+    GenericArgument, GenericParam, Generics, Path, PathArguments, PathSegment, Type, TypeParam,
+    TypePath, __private::TokenStream2,
+};
 
 pub fn partial_pattern_from_derive(input: DeriveInput, is_terminal_pattern: bool) -> TokenStream2 {
     let DeriveInput {
