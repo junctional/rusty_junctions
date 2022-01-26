@@ -1,35 +1,9 @@
-use proc_macro::{self, TokenStream};
+use rusty_junctions_utils::Module;
 use proc_macro2::Span;
 use quote::quote;
-use rusty_junctions_utils::Module;
-use syn::{parse_macro_input, Ident, Token, LitBool,
-          parse::{Parse, ParseStream}};
+use syn::{Ident, __private::TokenStream2};
 
-struct PatternInput {
-    module: Module,
-    final_pattern: bool
-}
-
-impl Parse for PatternInput {
-    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
-        if input.is_empty() {
-            panic!("Invalid input for PatternInput");
-        }
-
-        let module = input.parse()?;
-        let _comma: Token![,] = input.parse()?;
-        let final_pattern = input
-            .parse::<LitBool>()?
-            .value();
-
-        Ok(Self { module, final_pattern })
-    }
-}
-
-#[proc_macro]
-pub fn pattern(input: TokenStream) -> TokenStream {
-    let PatternInput {module, final_pattern} = parse_macro_input!(input);
-
+pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 {
     let patterns_macro = if final_pattern {
         quote!(TerminalPartialPattern)
     } else {

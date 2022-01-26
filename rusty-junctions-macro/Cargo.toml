@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 rusty-junctions-utils = { path = "rusty-junctions-utils" }
-rusty-junctions-patterns-generate = { path = "rusty-junctions-patterns-generate" }proc-macro2 = "1.0"
 syn = { version = "1.0", features = ["full"] }
 quote = "1.0"
 
