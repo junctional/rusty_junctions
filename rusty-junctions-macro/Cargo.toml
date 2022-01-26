@@ -6,7 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rusty-junctions-function-types = { path = "rusty-junctions-function-types" }
 rusty-junctions-utils = { path = "rusty-junctions-utils" }
 rusty-junctions-join-pattern-derive = { path = "rusty-junctions-join-pattern-derive" }
 rusty-junctions-partial-pattern-derive = { path = "rusty-junctions-partial-pattern-derive" }
