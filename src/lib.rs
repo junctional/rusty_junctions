@@ -140,27 +140,6 @@ mod types;
 
 pub use junction::Junction;
 
-mod function_transforms {
-    //! Function transformers used to hide actual type signatures of functions stored
-    //! with a Join Pattern and instead expose a generic interface that is easily stored.
-
-    // Function transformers for functions stored with unary Join Patterns.
-    rusty_junctions_macro::function_transform!(unary; T);
-
-    // Function transformers for functions stored with binary Join Patterns.
-    rusty_junctions_macro::function_transform!(binary; T, U);
-
-    // Function transformers for functions stored with ternary Join Patterns.
-    rusty_junctions_macro::function_transform!(ternary; T, U, V);
-}
-
-mod patterns {
-    // Create all of the Send, Recv, and Bidir for the unary module
-    rusty_junctions_macro::pattern!(1, false);
-
-    // Create all of the Send, Recv, and Bidir for the unary module
-    rusty_junctions_macro::pattern!(2, false);
-
-    // Create all of the Send, Recv, and Bidir for the unary module
-    rusty_junctions_macro::pattern!(3, true);
-}
+// Generate the library, upto an order of 3. That is `unary`, `binary`,
+// and `ternary` modules.
+rusty_junctions_macro::library_generate!(3);

@@ -47,19 +47,6 @@ pub enum Packet {
     ShutDownRequest,
 }
 
-/// Function types related to various kind of functions that can be stored and
-/// executed with Join Patterns.
-pub mod functions {
-    // Types and Traits for functions which take one argument.
-    rusty_junctions_macro::function_types!(unary; 1);
-
-    // Types and Traits for functions which take two arguments.
-    rusty_junctions_macro::function_types!(binary; 2);
-
-    // Types and Traits for functions which take three arguments.
-    rusty_junctions_macro::function_types!(ternary; 3);
-}
-
 /// Adds specific ID types for the various IDs that are used in the crate.
 pub mod ids {
     use std::sync::atomic::{AtomicUsize, Ordering};

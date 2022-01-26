@@ -1,39 +1,11 @@
-use proc_macro::{self, TokenStream};
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use syn::{
-    parse::{Parse, ParseStream},
-    parse_macro_input, LitInt, Token,
-};
+use rusty_junctions_utils::Module;
+use syn::__private::TokenStream2;
 
-struct FunctionTypesInput {
-    module_name: Ident,
-    number_of_arguments: usize,
-}
-
-impl Parse for FunctionTypesInput {
-    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
-        if input.is_empty() {
-            panic!("Invalid input to macro function_types");
-        }
-
-        let module_name: Ident = input.parse()?;
-        let _semi_colon_token: Token![;] = input.parse()?;
-        let number_of_arguments: usize = input.parse::<LitInt>()?.base10_parse::<usize>()?;
-
-        Ok(FunctionTypesInput {
-            module_name,
-            number_of_arguments,
-        })
-    }
-}
-
-#[proc_macro]
-pub fn function_types(input: TokenStream) -> TokenStream {
-    let FunctionTypesInput {
-        module_name,
-        number_of_arguments,
-    } = parse_macro_input!(input);
+pub fn function_types_from_module(module: Module) -> TokenStream2 {
+    let module_name = module.ident();
+    let number_of_arguments = module.number();
 
     let message_ident = Ident::new("Message", Span::call_site());
     let messages = std::iter::repeat(message_ident)

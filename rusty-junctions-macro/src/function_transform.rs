@@ -1,17 +1,9 @@
-use proc_macro::{self, TokenStream};
 use proc_macro2::Span;
 use quote::quote;
 use rusty_junctions_utils::Module;
-use syn::{
-    parse_macro_input,
-    Ident,
-};
+use syn::{Ident, __private::TokenStream2};
 
-#[proc_macro]
-pub fn function_transform(input: TokenStream) -> TokenStream {
-    use syn::__private::TokenStream2;
-
-    let module: Module = parse_macro_input!(input);
+pub fn function_transform_from_module(module: Module) -> TokenStream2 {
     let module_name = module.ident();
     let type_parameters = module.type_parameters();
 
@@ -45,47 +37,44 @@ pub fn function_transform(input: TokenStream) -> TokenStream {
 
     let output = quote! {
         pub(crate) mod #module_name {
-            use crate::types::{functions, Message};
-            use std::{any::Any, sync::mpsc::Sender};
-
             /// Transform function of `SendJoinPattern` to use `Message` arguments.
-            pub(crate) fn transform_send<F, #(#send_types ,)* >(f: F) -> Box<impl functions::#module_name::FnBoxClone>
+            pub(crate) fn transform_send<F, #(#send_types ,)* >(f: F) -> Box<impl crate::functions::#module_name::FnBoxClone>
             where
-                F: Fn( #(#send_types ,)* ) -> () + Send + Clone + 'static,
-                #(#send_types: Any + Send + 'static ,)*
+                F: Fn( #(#send_types ,)* ) -> () + std::marker::Send + Clone + 'static,
+                #(#send_types: std::any::Any + std::marker::Send + 'static ,)*
             {
-                Box::new(move | #(#send_function_args: Message ,)* | {
+                Box::new(move | #(#send_function_args: crate::types::Message ,)* | {
                     f( #(#send_stmts ,)* );
                 })
             }
 
 
             /// Transform function of `RecvJoinPattern` to use `Message` arguments.
-            pub(crate) fn transform_recv<F, #(#recv_types ,)* R>(f: F) -> Box<impl functions::#module_name::FnBoxClone>
+            pub(crate) fn transform_recv<F, #(#recv_types ,)* R>(f: F) -> Box<impl crate::functions::#module_name::FnBoxClone>
             where
-                F: Fn( #(#recv_types ,)* ) -> R + Send + Clone + 'static,
-                #(#recv_types: Any + Send + 'static ,)*
-                R: Any + Send + 'static,
+                F: Fn( #(#recv_types ,)* ) -> R + std::marker::Send + Clone + 'static,
+                #(#recv_types: std::any::Any + std::marker::Send + 'static ,)*
+                R: std::any::Any + std::marker::Send + 'static,
             {
                 Box::new(
-                    move | #(#recv_function_args: Message ,)* return_sender: Message| {
-                        let return_sender = *return_sender.downcast::<Sender<R>>().unwrap();
+                    move | #(#recv_function_args: crate::types::Message ,)* return_sender: crate::types::Message| {
+                        let return_sender = *return_sender.downcast::<std::sync::mpsc::Sender<R>>().unwrap();
                         return_sender.send(f( #(#recv_stmts ,)* )).unwrap();
                     },
                 )
             }
 
             /// Transform function of `BidirJoinPattern` to use `Message` arguments.
-            pub(crate) fn transform_bidir<F, #(#type_parameters ,)* R>(f: F) -> Box<impl functions::#module_name::FnBoxClone>
+            pub(crate) fn transform_bidir<F, #(#type_parameters ,)* R>(f: F) -> Box<impl crate::functions::#module_name::FnBoxClone>
             where
-                F: Fn( #(#send_types ,)* ) -> R + Send + Clone + 'static,
-                #(#send_types: Any + Send + 'static ,)*
-                R: Any + Send + 'static,
+                F: Fn( #(#send_types ,)* ) -> R + std::marker::Send + Clone + 'static,
+                #(#send_types: std::any::Any + std::marker::Send + 'static ,)*
+                R: std::any::Any + std::marker::Send + 'static,
             {
                 Box::new(
-                    move | #(#recv_function_args: Message ,)* arg_3_and_sender: Message| {
+                    move | #(#recv_function_args: crate::types::Message ,)* arg_3_and_sender: crate::types::Message| {
                         let (arg_3, return_sender) =
-                            *arg_3_and_sender.downcast::<(#last_type, Sender<R>)>().unwrap();
+                            *arg_3_and_sender.downcast::<(#last_type, std::sync::mpsc::Sender<R>)>().unwrap();
 
                         return_sender.send(f( #(#recv_stmts ,)* arg_3)).unwrap();
                     },

@@ -1,15 +1,12 @@
-use proc_macro::{self, TokenStream};
 use proc_macro2::{Ident, Span};
 use quote::quote;
+use syn::__private::TokenStream2;
 use syn::{
-    parse_macro_input, Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed, Path,
-    PathSegment, Type, TypePath,
+    Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed, Path, PathSegment, Type, TypePath,
 };
 
-#[proc_macro_derive(JoinPattern)]
-pub fn join_pattern(input: TokenStream) -> TokenStream {
-    use syn::__private::TokenStream2;
-    let DeriveInput { ident, data, .. } = parse_macro_input!(input);
+pub fn join_pattern_from_derive(input: DeriveInput) -> TokenStream2 {
+    let DeriveInput { ident, data, .. } = input;
 
     let join_pattern_name = ident.to_string().replace("Partial", "Join");
     let join_pattern_name = Ident::new(&join_pattern_name, Span::call_site());
@@ -29,6 +26,7 @@ pub fn join_pattern(input: TokenStream) -> TokenStream {
 
     let channel_number = channel_fields.len();
 
+    // TODO: Use the Module type
     let module_name = match channel_number {
         1 => "unary".to_string(),
         2 => "binary".to_string(),
@@ -44,7 +42,7 @@ pub fn join_pattern(input: TokenStream) -> TokenStream {
     let output = quote! {
         pub struct #join_pattern_name {
             #( #channel_fields: crate::types::ids::ChannelId ,)*
-            f: crate::types::functions::#module_name::FnBox,
+            f: crate::functions::#module_name::FnBox,
         }
 
         impl crate::join_pattern::JoinPattern for #join_pattern_name {
