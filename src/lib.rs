@@ -140,6 +140,5 @@ mod types;
 
 pub use junction::Junction;
 
-// Generate the library, upto an order of 3. That is `unary`, `binary`,
-// and `ternary` modules.
-rusty_junctions_macro::library_generate!(3);
+// Generate the library, upto an order of 32.
+rusty_junctions_macro::library_generate!(32);
