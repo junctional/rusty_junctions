@@ -7,30 +7,22 @@ pub fn function_transform_from_module(module: Module) -> TokenStream2 {
     let module_name = module.ident();
     let type_parameters = module.type_parameters();
 
+    // TODO: Do this without the mutable vec definition
     let mut send_types: Vec<Ident> = Vec::new();
     let mut send_function_args: Vec<Ident> = Vec::new();
     let mut send_stmts: Vec<TokenStream2> = Vec::new();
 
-    let mut recv_types: Vec<Ident> = Vec::new();
-    let mut recv_function_args: Vec<Ident> = Vec::new();
-    let mut recv_stmts: Vec<TokenStream2> = Vec::new();
-
-    type_parameters.iter().enumerate().for_each(|(i, t)| {
-        let ty_ident = Ident::new(&t.to_string(), Span::call_site());
-
+    module.type_parameters().enumerate().for_each(|(i, t)| {
         let send_arg_ident = Ident::new(&format!("arg_{}", i), Span::call_site());
         let send_arg_stmt = quote! {*#send_arg_ident.downcast::<#t>().unwrap()};
-        send_types.push(ty_ident.clone());
+        send_types.push(t.clone());
         send_function_args.push(send_arg_ident);
         send_stmts.push(send_arg_stmt);
-
-        let recv_arg_ident = Ident::new(&format!("arg_{}", i), proc_macro2::Span::call_site());
-        let recv_arg_stmt = quote! {*#recv_arg_ident.downcast::<#t>().unwrap()};
-        recv_types.push(ty_ident.clone());
-        recv_function_args.push(recv_arg_ident);
-        recv_stmts.push(recv_arg_stmt);
     });
 
+    let mut recv_types: Vec<Ident> = send_types.to_vec();
+    let mut recv_function_args: Vec<Ident> = send_function_args.to_vec();
+    let mut recv_stmts: Vec<TokenStream2> = send_stmts.to_vec();
     let last_type = recv_types.pop();
     recv_function_args.pop();
     recv_stmts.pop();
