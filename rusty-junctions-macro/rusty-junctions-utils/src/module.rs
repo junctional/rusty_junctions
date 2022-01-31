@@ -34,10 +34,11 @@ impl Module {
         Ident::new(&name, Span::call_site())
     }
 
-    pub fn type_parameters(&self) -> Vec<Ident> {
-        (1..=self.number())
-            .map(|n| Ident::new(&"A".repeat(n), Span::call_site()))
-            .collect::<Vec<Ident>>()
+    pub fn type_parameters(&self) -> TypeParamIterator {
+        TypeParamIterator {
+            module_number: self.number,
+            number: 1,
+        }
     }
 }
 
@@ -62,5 +63,23 @@ impl Parse for Module {
             .map_err(|_| syn::Error::new(Span::call_site(), "ParseStream was not a usize"))?;
 
         Ok(Self { number })
+    }
+}
+
+pub struct TypeParamIterator {
+    module_number: usize,
+    number: usize,
+}
+
+impl std::iter::Iterator for TypeParamIterator {
+    type Item = Ident;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.number > self.module_number {
+            return None;
+        }
+
+        let ident = Ident::new(&"A".repeat(self.number), Span::call_site());
+        self.number += 1;
+        Some(ident)
     }
 }
