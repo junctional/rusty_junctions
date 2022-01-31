@@ -4,6 +4,7 @@ use syn::__private::TokenStream2;
 use syn::{
     Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed, Path, PathSegment, Type, TypePath,
 };
+use rusty_junctions_utils::Module;
 
 pub fn join_pattern_from_derive(input: DeriveInput) -> TokenStream2 {
     let DeriveInput { ident, data, .. } = input;
@@ -24,16 +25,9 @@ pub fn join_pattern_from_derive(input: DeriveInput) -> TokenStream2 {
         .filter_map(|f| channel_field(f))
         .collect();
 
-    let channel_number = channel_fields.len();
-
-    // TODO: Use the Module type
-    let module_name = match channel_number {
-        1 => "unary".to_string(),
-        2 => "binary".to_string(),
-        3 => "ternary".to_string(),
-        n => format!("n{}ary", n),
-    };
-    let module_name = Ident::new(&module_name, Span::call_site());
+    let module = Module::from_usize(channel_fields.len());
+    let channel_number = module.number();
+    let module_name = module.ident();
 
     let function_args: Vec<TokenStream2> = std::iter::repeat(quote!(messages.remove(0)))
         .take(channel_number)

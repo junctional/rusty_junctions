@@ -4,32 +4,25 @@ use rusty_junctions_utils::Module;
 use syn::{Ident, __private::TokenStream2};
 
 pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 {
-    let patterns_macro = if final_pattern {
-        quote!(TerminalPartialPattern)
-    } else {
-        quote!(PartialPattern)
-    };
-
     let module_name = module.ident();
     let number_of_send_channels = module.number() - 1;
 
-    // TODO: Fix this we we support any number, not just the length of the alpabet - 1
-    // We have we exclude A due to another hack in the derive partial patterns macro
-    // That also needs to be fixed
-    let alphabet = ('B'..='Z')
-        .map(|c| c as char)
-        .filter(|c| c.is_alphabetic())
-        .collect::<Vec<char>>();
-
-    let generics = alphabet
-        .iter()
-        .take(number_of_send_channels)
-        .map(|c| Ident::new(&c.to_string(), Span::call_site()))
+    // TODO: Use the Module iterator to do this
+    // Not creating a new module every time
+    let generics = (1..=number_of_send_channels)
+        .into_iter()
+        .map(|n| Module::from_usize(n).ident())
         .collect::<Vec<Ident>>();
 
     let channel_names = (0..number_of_send_channels)
         .map(|n| Ident::new(&format!("channel_{}", n), Span::call_site()))
         .collect::<Vec<Ident>>();
+
+    let patterns_macro = if final_pattern {
+        quote!(TerminalPartialPattern)
+    } else {
+        quote!(PartialPattern)
+    };
 
     let output = quote! {
         pub mod #module_name {
