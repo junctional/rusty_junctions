@@ -12,17 +12,10 @@ pub fn function_types_from_module(module: Module) -> TokenStream2 {
         .take(number_of_arguments)
         .collect::<Vec<Ident>>();
 
-    let arguments = quote! { #( #messages ,)*  };
+    let arguments = quote! { #( crate::types::#messages ,)*  };
 
     let output = quote! {
         pub mod #module_name {
-            use std::{
-                any::Any,
-                sync::mpsc::Sender,
-                thread::{JoinHandle, Thread},
-            };
-            use crate::types::Message;
-
             /// Trait to allow boxed up functions that take three `Message`s and return
             /// nothing to be cloned.
             pub trait FnBoxClone: Fn( #arguments ) -> () + Send {
