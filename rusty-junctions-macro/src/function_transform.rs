@@ -64,11 +64,11 @@ pub fn function_transform_from_module(module: Module) -> TokenStream2 {
                 R: std::any::Any + std::marker::Send + 'static,
             {
                 Box::new(
-                    move | #(#recv_function_args: crate::types::Message ,)* arg_3_and_sender: crate::types::Message| {
-                        let (arg_3, return_sender) =
-                            *arg_3_and_sender.downcast::<(#last_type, std::sync::mpsc::Sender<R>)>().unwrap();
+                    move | #(#recv_function_args: crate::types::Message ,)* arg_bi_and_sender: crate::types::Message| {
+                        let (arg_bi, return_sender) =
+                            *arg_bi_and_sender.downcast::<(#last_type, std::sync::mpsc::Sender<R>)>().unwrap();
 
-                        return_sender.send(f( #(#recv_stmts ,)* arg_3)).unwrap();
+                        return_sender.send(f( #(#recv_stmts ,)* arg_bi)).unwrap();
                     },
                 )
             }
