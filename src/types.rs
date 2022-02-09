@@ -52,7 +52,7 @@ pub mod ids {
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     /// ID to identify a channel within a Join Pattern.
-    #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Ord, PartialOrd)]
     pub struct ChannelId(usize);
 
     impl ChannelId {
