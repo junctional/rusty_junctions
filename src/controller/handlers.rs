@@ -18,7 +18,7 @@ impl Controller {
     /// This function will continuously receive `Packet`s sent from structs
     /// associated with the `Junction` that created and started this `Controller`
     /// until a `Packet::ShutDownRequest` has been sent.
-    pub(in crate::controller) fn handle_packets(&mut self, receiver: Receiver<Packet>) {
+    pub(in crate::controller) fn handle_packets(mut self, receiver: Receiver<Packet>) {
         use Packet::*;
 
         while let Ok(packet) = receiver.recv() {
@@ -33,6 +33,11 @@ impl Controller {
                 ShutDownRequest => break,
             }
         }
+
+        // Join all of the `JoinHandle`s of the firing `JoinPattern`
+        self.firing_join_patterns.into_iter().for_each(|handle| {
+            handle.join().ok();
+        })
     }
 
     /// Handle a received `Message` from a given channel.
