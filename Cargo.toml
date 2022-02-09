@@ -15,7 +15,8 @@ bag = { path = "bag" }
 inverted-index = { path = "inverted-index" }
 counter = { path = "counter" }
 rusty-junctions-macro = { path = "rusty-junctions-macro" }
+log = "0.4.14"
 
-itertools = "0.10.3"
 [dev-dependencies]
 rand = "0.7.3"
+pretty_env_logger = "0.4.0"
