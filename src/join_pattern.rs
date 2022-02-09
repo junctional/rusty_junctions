@@ -40,6 +40,7 @@ pub trait JoinPattern: Send {
             .send(Packet::AddJoinPatternRequest {
                 join_pattern: Box::new(self),
             })
+            .map_err(|e| log::error!("Failed to send AddJoinPatternRequest: {e:?}"))
             .unwrap();
     }
 

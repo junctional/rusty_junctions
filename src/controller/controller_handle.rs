@@ -37,8 +37,24 @@ impl ControllerHandle {
     ///
     /// Panics if it was unable to send shut-down request to the control thread.
     pub fn stop(&mut self) {
-        self.sender.send(Packet::ShutDownRequest).unwrap();
+        log::debug!("Controller asked to shutdown");
+        self.sender
+            .send(Packet::ShutDownRequest)
+            .map_err(|e| log::error!("Failed to send ShutDownRequest: {e:?}"))
+            .unwrap();
 
-        self.control_thread_handle.take().unwrap().join().unwrap();
+        let controller_handle = self.control_thread_handle.take();
+
+        if controller_handle.is_none() {
+            log::error!("Failed to take the ControllerHandle");
+        }
+
+        controller_handle
+            .unwrap()
+            .join()
+            .map_err(|_| log::error!("Failed to join the Controller thread to the main thread"))
+            .unwrap();
+
+        log::debug!("Controller shutdown");
     }
 }
