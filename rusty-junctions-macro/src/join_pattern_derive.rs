@@ -45,12 +45,12 @@ pub fn join_pattern_from_derive(input: DeriveInput) -> TokenStream2 {
             }
 
             /// Fire Join Pattern by running associated function in separate thread.
-            fn fire(&self, mut messages: Vec<crate::types::Message>) {
+            fn fire(&self, mut messages: Vec<crate::types::Message>) -> std::thread::JoinHandle<()> {
                 let f_clone = self.f.clone();
 
                 std::thread::spawn(move || {
                     (*f_clone)( #( #function_args ,)* );
-                });
+                })
             }
         }
     };
