@@ -2,7 +2,6 @@ use std::cmp::Ordering;
 
 use crate::{
     controller::Controller,
-    // join_pattern::JoinPattern,
     types::{ids::JoinPatternId, Message},
 };
 
@@ -93,7 +92,16 @@ impl Controller {
             messages_for_channels.push(message);
         }
 
-        join_pattern.fire(messages_for_channels);
+        // Get a handle to the firing Join Pattern
+        let thread_handle = join_pattern.fire(messages_for_channels);
+
+        // Add the pattern to set of patterns that are firing
+        self.firing_join_patterns.push(thread_handle);
+
+        // Prune the threads that have completed firing
+        // i.e. Keep all of the JoinHandle that are still running
+        self.firing_join_patterns
+            .retain(|handle| handle.is_running());
     }
 
     /// Reset the `Counter` at which the given Join Pattern has last been fired.
