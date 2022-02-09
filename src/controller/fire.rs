@@ -93,6 +93,7 @@ impl Controller {
         }
 
         // Get a handle to the firing Join Pattern
+        log::debug!("Firing JoinPattern: {join_pattern_id:?}");
         let thread_handle = join_pattern.fire(messages_for_channels);
 
         // Add the pattern to set of patterns that are firing
@@ -100,8 +101,16 @@ impl Controller {
 
         // Prune the threads that have completed firing
         // i.e. Keep all of the JoinHandle that are still running
+        log::debug!(
+            "Current Firing Join Patterns: {:?}",
+            self.firing_join_patterns
+        );
         self.firing_join_patterns
             .retain(|handle| handle.is_running());
+        log::debug!(
+            "Purged Firing Join Patterns: {:?}",
+            self.firing_join_patterns
+        );
     }
 
     /// Reset the `Counter` at which the given Join Pattern has last been fired.

@@ -151,6 +151,7 @@ impl<R: Any + Send> RecvChannel<R> {
                 channel_id: self.id,
                 msg: Message::new(tx),
             })
+            .map_err(|e| log::error!("Failed to send Recv Message: {e:?}"))
             .unwrap();
 
         rx.recv()
@@ -254,6 +255,7 @@ impl<T: Any + Send, R: Any + Send> BidirChannel<T, R> {
                 channel_id: self.id,
                 msg: Message::new((msg, tx)),
             })
+            .map_err(|e| log::error!("Failed to send Bidir Message: {e:?}"))
             .unwrap();
 
         rx.recv()

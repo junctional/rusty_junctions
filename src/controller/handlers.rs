@@ -23,21 +23,31 @@ impl Controller {
 
         while let Ok(packet) = receiver.recv() {
             match packet {
-                Message { channel_id, msg } => self.handle_message(channel_id, msg),
+                Message { channel_id, msg } => {
+                    log::debug!("Handling a Packet::Message to: {channel_id:?}");
+                    self.handle_message(channel_id, msg);
+                }
                 NewChannelIdRequest { return_sender } => {
+                    log::debug!("Handling a Packet::NewChannelIdRequest");
                     self.handle_new_channel_id_request(return_sender)
                 }
                 AddJoinPatternRequest { join_pattern } => {
+                    log::debug!("Handling a Packet::AddJoinPatternRequest");
                     self.handle_add_join_pattern_request(join_pattern)
                 }
-                ShutDownRequest => break,
+                ShutDownRequest => {
+                    log::debug!("Handling a Packet::ShutDownRequest");
+                    break;
+                }
             }
         }
 
         // Join all of the `JoinHandle`s of the firing `JoinPattern`
+        log::debug!("Starting to join all of the firing threads");
         self.firing_join_patterns.into_iter().for_each(|handle| {
             handle.join().ok();
-        })
+        });
+        log::debug!("Finished joining all of the firing threads");
     }
 
     /// Handle a received `Message` from a given channel.
@@ -80,7 +90,10 @@ impl Controller {
     ///
     /// Panics if the new `ChannelId` could not be sent to the requesting `Junction`.
     fn handle_new_channel_id_request(&mut self, return_sender: Sender<ChannelId>) {
-        return_sender.send(self.new_channel_id()).unwrap();
+        return_sender
+            .send(self.new_channel_id())
+            .map_err(|e| log::error!("Failed to send NewChannelIdRequest: {e:?}"))
+            .unwrap();
     }
 
     /// Add new Join Pattern to `Controller` storage.

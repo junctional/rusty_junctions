@@ -129,6 +129,7 @@ impl Junction {
             .send(Packet::NewChannelIdRequest {
                 return_sender: id_sender,
             })
+            .map_err(|e| log::error!("Failed to send NewChannelIdRequest: {e:?}"))
             .unwrap();
 
         id_receiver.recv()
@@ -211,8 +212,12 @@ impl Drop for Junction {
     /// associated `Controller` and join the control thread. Otherwise, no
     /// action is needed.
     fn drop(&mut self) {
+        log::debug!("Dropping Junction - Attempting to shutdown Controller");
         if self.controller_handle.is_some() {
+            log::debug!("Controller has a ControllerHandle");
             self.controller_handle.take().unwrap().stop();
+        } else {
+            log::debug!("Controller didn't have a ControllerHandle");
         }
     }
 }
