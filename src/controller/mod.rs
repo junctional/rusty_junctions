@@ -11,7 +11,7 @@ pub use controller_handle::ControllerHandle;
 use std::{
     collections::HashMap,
     sync::mpsc::{Receiver, Sender},
-    thread,
+    thread::{self, JoinHandle},
 };
 
 use crate::{
@@ -51,6 +51,11 @@ pub(crate) struct Controller {
     /// Used to easily determine which Join Patterns are relevant any time a new
     /// message comes in.
     join_pattern_index: InvertedIndex<ChannelId, JoinPatternId>,
+    /// A store of all of the `JoinPattern` that are currently firing. When
+    /// the `stop` directive is given to the controller, we can join all of
+    /// the `JoinHandle`s to ensure the computation being performed by each
+    /// thread is given time to complete.
+    firing_join_patterns: Vec<JoinHandle<()>>,
 }
 
 impl Controller {
@@ -63,6 +68,7 @@ impl Controller {
             join_patterns: HashMap::new(),
             join_pattern_last_fired: HashMap::new(),
             join_pattern_index: InvertedIndex::new(),
+            firing_join_patterns: Vec::new(),
         }
     }
 
@@ -73,7 +79,7 @@ impl Controller {
     /// `ControlThreadHandle` so that this control thread can be joint at any future
     /// point.
     pub(crate) fn start(
-        mut self,
+        self,
         sender: Sender<Packet>,
         receiver: Receiver<Packet>,
     ) -> ControllerHandle {

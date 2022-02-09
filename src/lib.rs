@@ -1,3 +1,4 @@
+#![feature(thread_is_running)]
 //! Crate implementing Join Patterns from the [Join Calculus](https://www.microsoft.com/en-us/research/wp-content/uploads/2017/01/join-tutorial.pdf) developed by
 //! Cédric Fournet and Georges Gonthier.
 //!
