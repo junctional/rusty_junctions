@@ -1,3 +1,5 @@
+pub use rusty_junctions_client_proc_macro::junction;
+
 #[macro_export]
 macro_rules! when {
     ( $junction:ident; $initial_channel:ident, $( $other_channels:ident ),* ) => {
