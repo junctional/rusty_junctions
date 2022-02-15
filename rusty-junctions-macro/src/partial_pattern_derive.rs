@@ -64,7 +64,7 @@ pub fn partial_pattern_from_derive(input: DeriveInput, is_terminal_pattern: bool
     });
     let and_recv_method_fn = (!is_terminal_pattern).then(|| {
         and_method(
-            "recv",
+            "and_recv",
             &next_module_name,
             "recv_channel",
             "Recv",
@@ -74,7 +74,7 @@ pub fn partial_pattern_from_derive(input: DeriveInput, is_terminal_pattern: bool
     });
     let and_bidir_method_fn = (!is_terminal_pattern).then(|| {
         and_method(
-            "bidir",
+            "and_bidir",
             &next_module_name,
             "bidir_channel",
             "Bidir",
