@@ -28,7 +28,7 @@ pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 
         pub mod #module_name {
             use crate::join_pattern::JoinPattern;
 
-            #[derive(rusty_junctions_macro::#patterns_macro, rusty_junctions_macro::JoinPattern)]
+            #[derive(rusty_junctions_library_macro::#patterns_macro, rusty_junctions_library_macro::JoinPattern)]
             /// `SendChannel` partial Join Pattern.
             pub struct SendPartialPattern< #( #generics , )* S> {
                 junction_id: crate::types::ids::JunctionId,
@@ -37,7 +37,7 @@ pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 
                 sender: std::sync::mpsc::Sender<crate::types::Packet>,
             }
 
-            #[derive(rusty_junctions_macro::TerminalPartialPattern, rusty_junctions_macro::JoinPattern)]
+            #[derive(rusty_junctions_library_macro::TerminalPartialPattern, rusty_junctions_library_macro::JoinPattern)]
             /// `RecvChannel` partial Join Pattern.
             pub struct RecvPartialPattern< #( #generics , )* S> {
                 // TODO: We need all send channels then one recv
@@ -46,7 +46,7 @@ pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 
                 sender: std::sync::mpsc::Sender<crate::types::Packet>,
             }
 
-            #[derive(rusty_junctions_macro::TerminalPartialPattern, rusty_junctions_macro::JoinPattern)]
+            #[derive(rusty_junctions_library_macro::TerminalPartialPattern, rusty_junctions_library_macro::JoinPattern)]
             /// Bidirectional channel partial Join Pattern.
             pub struct BidirPartialPattern< #( #generics , )* S, R> {
                 // TODO: We need all send channels then one bidir
