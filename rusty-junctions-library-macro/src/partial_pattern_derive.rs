@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use rusty_junctions_utils::Module;
+use crate::Module;
 use syn::{
     AngleBracketedGenericArguments, Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed,
     GenericArgument, GenericParam, Generics, Path, PathArguments, PathSegment, Type, TypeParam,

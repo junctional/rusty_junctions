@@ -1,6 +1,6 @@
 use proc_macro2::Span;
 use quote::quote;
-use rusty_junctions_utils::Module;
+use crate::Module;
 use syn::{Ident, __private::TokenStream2};
 
 pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 {

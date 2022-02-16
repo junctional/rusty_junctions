@@ -4,9 +4,10 @@ mod join_pattern_derive;
 mod library_generate;
 mod partial_pattern_derive;
 mod pattern_generation;
+mod module;
 
+use module::Module;
 use proc_macro::{self, TokenStream};
-use rusty_junctions_utils::Module;
 use syn::{parse_macro_input, DeriveInput};
 
 use crate::{

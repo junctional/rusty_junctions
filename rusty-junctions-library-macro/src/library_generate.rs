@@ -1,6 +1,6 @@
 use crate::{function_transform_from_module, function_types_from_module, pattern_from_module};
 use quote::quote;
-use rusty_junctions_utils::Module;
+use crate::Module;
 use syn::__private::TokenStream2;
 
 pub fn library_generate_from_module(module: Module) -> TokenStream2 {

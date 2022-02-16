@@ -1,8 +1,0 @@
-[package]
-name = "rusty-junctions-utils"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-syn = { version = "1.0", features = ["full"] }
-proc-macro2 = "1.0"
