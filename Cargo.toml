@@ -16,6 +16,7 @@ inverted-index = { path = "inverted-index" }
 counter = { path = "counter" }
 rusty-junctions-library-macro = { path = "rusty-junctions-library-macro" }
 rusty-junctions-client-macro = { path = "rusty-junctions-client-macro" }
+rusty-junctions-macro = { path = "rusty-junctions-macro" }
 log = "0.4.14"
 
 [dev-dependencies]

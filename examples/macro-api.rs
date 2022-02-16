@@ -1,4 +1,5 @@
-use rusty_junctions_client_macro::{channel_def, junction_dec, when, junction};
+use rusty_junctions_client_macro::{channel_def, junction_dec, when};
+use rusty_junctions_macro::client::junction;
 
 fn main() {
     pretty_env_logger::init();
