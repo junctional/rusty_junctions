@@ -1,5 +1,5 @@
 [package]
-name = "rusty-junctions-library-macro"
+name = "library-generation-proc-macro"
 version = "0.1.0"
 edition = "2021"
 

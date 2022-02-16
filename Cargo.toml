@@ -14,7 +14,6 @@ categories = ["concurrency"]
 bag = { path = "bag" }
 inverted-index = { path = "inverted-index" }
 counter = { path = "counter" }
-rusty-junctions-library-macro = { path = "rusty-junctions-library-macro" }
 rusty-junctions-macro = { path = "rusty-junctions-macro" }
 log = "0.4.14"
 
