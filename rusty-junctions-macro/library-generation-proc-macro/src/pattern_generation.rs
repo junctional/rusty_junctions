@@ -1,6 +1,6 @@
 use proc_macro2::Span;
 use quote::quote;
-use rusty_junctions_utils::Module;
+use crate::Module;
 use syn::{Ident, __private::TokenStream2};
 
 pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 {
@@ -24,11 +24,12 @@ pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 
         quote!(PartialPattern)
     };
 
+    let library_path = quote!(rusty_junctions_macro::library);
     let output = quote! {
         pub mod #module_name {
             use crate::join_pattern::JoinPattern;
 
-            #[derive(rusty_junctions_macro::#patterns_macro, rusty_junctions_macro::JoinPattern)]
+            #[derive(#library_path::#patterns_macro, #library_path::JoinPattern)]
             /// `SendChannel` partial Join Pattern.
             pub struct SendPartialPattern< #( #generics , )* S> {
                 junction_id: crate::types::ids::JunctionId,
@@ -37,7 +38,7 @@ pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 
                 sender: std::sync::mpsc::Sender<crate::types::Packet>,
             }
 
-            #[derive(rusty_junctions_macro::TerminalPartialPattern, rusty_junctions_macro::JoinPattern)]
+            #[derive(#library_path::TerminalPartialPattern, #library_path::JoinPattern)]
             /// `RecvChannel` partial Join Pattern.
             pub struct RecvPartialPattern< #( #generics , )* S> {
                 // TODO: We need all send channels then one recv
@@ -46,7 +47,7 @@ pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 
                 sender: std::sync::mpsc::Sender<crate::types::Packet>,
             }
 
-            #[derive(rusty_junctions_macro::TerminalPartialPattern, rusty_junctions_macro::JoinPattern)]
+            #[derive(#library_path::TerminalPartialPattern, #library_path::JoinPattern)]
             /// Bidirectional channel partial Join Pattern.
             pub struct BidirPartialPattern< #( #generics , )* S, R> {
                 // TODO: We need all send channels then one bidir

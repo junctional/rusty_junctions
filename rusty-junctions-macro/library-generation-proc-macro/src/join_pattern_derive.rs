@@ -4,7 +4,7 @@ use syn::__private::TokenStream2;
 use syn::{
     Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed, Path, PathSegment, Type, TypePath,
 };
-use rusty_junctions_utils::Module;
+use crate::Module;
 
 pub fn join_pattern_from_derive(input: DeriveInput) -> TokenStream2 {
     let DeriveInput { ident, data, .. } = input;

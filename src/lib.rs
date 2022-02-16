@@ -142,4 +142,4 @@ mod types;
 pub use junction::Junction;
 
 // Generate the library, upto an order of 32.
-rusty_junctions_macro::library_generate!(32);
+rusty_junctions_macro::library::generate!(32);

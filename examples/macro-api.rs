@@ -1,4 +1,5 @@
-use rusty_junctions_client_macro::{channel_def, junction_dec, when, junction};
+use rusty_junctions_client_macro::{channel_def, junction_dec, when};
+use rusty_junctions_macro::client::junction;
 
 fn main() {
     pretty_env_logger::init();
@@ -23,7 +24,9 @@ fn main() {
     };
     value.send(1).unwrap();
     name.send(String::from("Hello, World!")).unwrap();
-    // Needs to have the Controller explicitly stopped
+    // Needs to have the Controller explicitly stopped, if we allowed it to
+    // be dropped from the inner scope there would be no guarantee it would
+    // have time for the pattern to fire.
     handle.stop();
 
 

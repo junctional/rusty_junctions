@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use rusty_junctions_utils::Module;
+use crate::Module;
 use syn::__private::TokenStream2;
 
 pub fn function_types_from_module(module: Module) -> TokenStream2 {
