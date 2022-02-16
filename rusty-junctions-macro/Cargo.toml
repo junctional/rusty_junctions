@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 client-api-proc-macro = { path = "client-api-proc-macro" }
+client-api-macro = { path = "client-api-macro" }
