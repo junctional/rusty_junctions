@@ -63,17 +63,9 @@ use crate::{
 /// The input [`TokenStream`](TokenStream) is a integer value representing
 /// the required maximum pattern arity.
 #[proc_macro]
-pub fn function_transform(input: TokenStream) -> TokenStream {
+pub fn library_generate(input: TokenStream) -> TokenStream {
     let module: Module = parse_macro_input!(input);
-    let output = function_transform_from_module(module);
-    output.into()
-}
-
-#[proc_macro]
-pub fn function_types(input: TokenStream) -> TokenStream {
-    // let module: FunctionTypesInput = parse_macro_input!(input);
-    let module: Module = parse_macro_input!(input);
-    let output = function_types_from_module(module);
+    let output = library_generate_from_module(module);
     output.into()
 }
 
@@ -115,12 +107,5 @@ pub fn terminal_partial_pattern(input: TokenStream) -> TokenStream {
 pub fn partial_pattern(input: TokenStream) -> TokenStream {
     let input: DeriveInput = parse_macro_input!(input);
     let output = partial_pattern_from_derive(input, false);
-    output.into()
-}
-
-#[proc_macro]
-pub fn library_generate(input: TokenStream) -> TokenStream {
-    let module: Module = parse_macro_input!(input);
-    let output = library_generate_from_module(module);
     output.into()
 }
