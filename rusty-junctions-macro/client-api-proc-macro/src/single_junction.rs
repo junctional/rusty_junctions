@@ -75,11 +75,8 @@ impl JoinPattern {
         channel_definitions: &Vec<ChannelDefinition>,
         junction_name: &Ident,
     ) -> TokenStream2 {
-        // Get the first send or bidir channel for this join pattern
-        // let channels = self.channels.map(|chan| channel_definitions.)
-
-        // Create a map of all of the channel names to the channels
-        // If the map already contains an element we panic, there should be no duplicates
+        // Create a map of all of the channel names to the channels If the map
+        // already contains an element we panic, there should be no duplicates
         let mut channels_map = std::collections::HashMap::new();
         channel_definitions.into_iter().for_each(|chan| {
             if let Some(_) = channels_map.insert(&chan.name, chan) {
