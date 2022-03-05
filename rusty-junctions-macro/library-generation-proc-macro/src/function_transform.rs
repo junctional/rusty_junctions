@@ -1,18 +1,18 @@
+use crate::Module;
 use proc_macro2::Span;
 use quote::quote;
-use crate::Module;
 use syn::{Ident, __private::TokenStream2};
 
 pub fn function_transform_from_module(module: Module) -> TokenStream2 {
     let module_name = module.ident();
-    let type_parameters = module.type_parameters();
+    let type_parameters = module.type_parameters("A");
 
     // TODO: Do this without the mutable vec definition
     let mut send_types: Vec<Ident> = Vec::new();
     let mut send_function_args: Vec<Ident> = Vec::new();
     let mut send_stmts: Vec<TokenStream2> = Vec::new();
 
-    module.type_parameters().enumerate().for_each(|(i, t)| {
+    module.type_parameters("A").enumerate().for_each(|(i, t)| {
         let send_arg_ident = Ident::new(&format!("arg_{}", i), Span::call_site());
         let send_arg_stmt = quote! {*#send_arg_ident.downcast::<#t>().unwrap()};
         send_types.push(t.clone());

@@ -34,10 +34,11 @@ impl Module {
         Ident::new(&name, Span::call_site())
     }
 
-    pub fn type_parameters(&self) -> TypeParamIterator {
+    pub fn type_parameters(&self, ident: &str) -> TypeParamIterator {
         TypeParamIterator {
             module_number: self.number,
             number: 1,
+            ident: ident.to_string(),
         }
     }
 }
@@ -69,6 +70,7 @@ impl Parse for Module {
 pub struct TypeParamIterator {
     module_number: usize,
     number: usize,
+    ident: String,
 }
 
 impl std::iter::Iterator for TypeParamIterator {
@@ -78,7 +80,7 @@ impl std::iter::Iterator for TypeParamIterator {
             return None;
         }
 
-        let ident = Ident::new(&"A".repeat(self.number), Span::call_site());
+        let ident = Ident::new(&self.ident.repeat(self.number), Span::call_site());
         self.number += 1;
         Some(ident)
     }

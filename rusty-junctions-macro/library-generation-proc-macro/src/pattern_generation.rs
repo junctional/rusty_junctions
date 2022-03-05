@@ -1,24 +1,22 @@
+use crate::Module;
 use proc_macro2::Span;
 use quote::quote;
-use crate::Module;
 use syn::{Ident, __private::TokenStream2};
 
-pub fn pattern_from_module(module: Module, final_pattern: bool) -> TokenStream2 {
+pub fn pattern_from_module(module: Module, is_terminal_pattern: bool) -> TokenStream2 {
     let module_name = module.ident();
-    let number_of_send_channels = module.number() - 1;
+    let number_non_specialist_channels = module.number() - 1;
 
-    // TODO: Use the Module iterator to do this
-    // Not creating a new module every time
-    let generics = (1..=number_of_send_channels)
-        .into_iter()
-        .map(|n| Module::from_usize(n).ident())
+    let generics = module
+        .type_parameters("B")
+        .take(number_non_specialist_channels)
         .collect::<Vec<Ident>>();
 
-    let channel_names = (0..number_of_send_channels)
+    let channel_names = (0..number_non_specialist_channels)
         .map(|n| Ident::new(&format!("channel_{}", n), Span::call_site()))
         .collect::<Vec<Ident>>();
 
-    let patterns_macro = if final_pattern {
+    let patterns_macro = if is_terminal_pattern {
         quote!(TerminalPartialPattern)
     } else {
         quote!(PartialPattern)
