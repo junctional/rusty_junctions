@@ -1,11 +1,141 @@
+use crate::Module;
 use proc_macro2::{Ident, Span};
 use quote::quote;
-use crate::Module;
+use std::str::FromStr;
 use syn::{
     AngleBracketedGenericArguments, Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed,
     GenericArgument, GenericParam, Generics, Path, PathArguments, PathSegment, Type, TypeParam,
     TypePath, __private::TokenStream2,
 };
+
+struct JoinPattern {
+    pub join_pattern_ident: Ident,
+    pub type_param: Vec<Ident>,
+    pub return_type: TokenStream2,
+    pub fn_param: Vec<Ident>,
+    pub transform_function: TokenStream2,
+    pub requires_junction_id: bool,
+    pub field_names: Vec<TokenStream2>,
+    pub field_types: Vec<TokenStream2>,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+enum Mode {
+    Send,
+    Recv,
+    Bidir,
+}
+
+impl FromStr for Mode {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "SendPartialPattern" => Ok(Mode::Send),
+            "RecvPartialPattern" => Ok(Mode::Recv),
+            "BidirPartialPattern" => Ok(Mode::Bidir),
+            _unsupported_mode => Err("Unsupported Channel Type".to_string()),
+        }
+    }
+}
+
+impl JoinPattern {
+    pub fn new(pattern_name: &Ident, generics: Generics, data: Data) -> Self {
+        let mode = Mode::from_str(&pattern_name.to_string()).unwrap();
+
+        let type_param = generics
+            .params
+            .into_iter()
+            .filter_map(|p| match p {
+                GenericParam::Type(TypeParam { ident, .. }) => Some(ident),
+                _ => None,
+            })
+            .collect::<Vec<Ident>>();
+
+        let mut fn_param = type_param.to_vec();
+
+        let return_type = match mode {
+            Mode::Send => quote!(()),
+            Mode::Recv | Mode::Bidir => {
+                let last_param = fn_param.pop();
+                quote!(#last_param)
+            }
+        };
+
+        let join_pattern_name = pattern_name
+            .to_string()
+            .replace("PartialPattern", "JoinPattern");
+        let join_pattern_ident = Ident::new(&join_pattern_name, Span::call_site());
+
+        let transform_function = match mode {
+            Mode::Send => quote!(transform_send(f)),
+            Mode::Recv => quote!(transform_recv(f)),
+            Mode::Bidir => quote!(transform_bidir(f)),
+        };
+
+        let requires_junction_id = mode == Mode::Send;
+
+        let (field_names, field_types) = Self::parse_data(data);
+
+        Self {
+            join_pattern_ident,
+            type_param,
+            return_type,
+            fn_param,
+            transform_function,
+            requires_junction_id,
+            field_names,
+            field_types,
+        }
+    }
+
+    pub fn parse_data(data: Data) -> (Vec<TokenStream2>, Vec<TokenStream2>) {
+        let mut field_names: Vec<TokenStream2> = Vec::new();
+        let mut field_ty_with_generics: Vec<TokenStream2> = Vec::new();
+
+        let fields = match data {
+            Data::Struct(DataStruct {
+                fields: Fields::Named(FieldsNamed { named, .. }),
+                ..
+            }) => named.into_iter().collect::<Vec<Field>>(),
+            _ => panic!("A PartialPattern should only be created from a struct with named fields."),
+        };
+
+        fields
+            .into_iter()
+            .filter(|f| is_channel(f))
+            .for_each(|Field { ident, ty, .. }| {
+                let field_name = ident.expect("Fields should always be named");
+                field_names.push(quote!(#field_name));
+
+                let (field_type, field_generics) = match get_last_type_path_segment(ty) {
+                    Some(PathSegment {
+                        ident,
+                        arguments:
+                            PathArguments::AngleBracketed(AngleBracketedGenericArguments {
+                                args, ..
+                            }),
+                    }) => {
+                        let generics: Vec<Ident> = args
+                            .into_iter()
+                            .filter_map(|a| match a {
+                                GenericArgument::Type(t) => get_last_type_path_segment(t),
+                                _ => None,
+                            })
+                            .map(|ps| ps.ident)
+                            .collect();
+
+                        Some((ident, generics))
+                    }
+                    _ => None,
+                }
+                .expect("Invalid PartialPattern Fields");
+
+                field_ty_with_generics.push(quote!(#field_type< #( #field_generics ,)* >));
+            });
+
+        (field_names, field_ty_with_generics)
+    }
+}
 
 pub fn partial_pattern_from_derive(input: DeriveInput, is_terminal_pattern: bool) -> TokenStream2 {
     let DeriveInput {
@@ -15,39 +145,37 @@ pub fn partial_pattern_from_derive(input: DeriveInput, is_terminal_pattern: bool
         ..
     } = input;
 
-    let partial_pattern_name = ident;
-    let join_pattern = JoinPattern::from_partial_pattern_name(&partial_pattern_name);
-    let join_pattern_name = join_pattern.clone().ident;
-    let transform_function = join_pattern.transform_function();
-    let generic_type_parameters = generic_type_parameters(generics);
-
-    let fields = get_fields(data);
-    let ParsedChannels {
-        field_names,
-        field_ty_with_generics,
-        function_args,
+    let JoinPattern {
+        join_pattern_ident,
+        type_param,
         return_type,
-    } = ParsedChannels::from_fields(fields);
+        fn_param,
+        transform_function,
+        requires_junction_id,
+        field_names,
+        field_types,
+    } = JoinPattern::new(&ident, generics, data);
 
-    let channel_number = field_names.len();
-    let mut module = Module::from_usize(channel_number);
+    let partial_pattern_name = ident;
+
+    let mut module = Module::from_usize(field_names.len());
     let module_name = module.ident();
     let next_module_name = module.next().expect("Will always be higher module").name();
 
     let new_method = new_method(
         &partial_pattern_name,
-        &generic_type_parameters,
+        &type_param,
         &field_names,
-        &field_ty_with_generics,
-        join_pattern.requires_junction_id(),
+        &field_types,
+        requires_junction_id,
     );
 
     // TODO: Fix this
     let then_do_method = then_do_method(
-        &join_pattern_name,
+        &join_pattern_ident,
         &field_names,
         &module_name,
-        &function_args,
+        &fn_param,
         return_type,
         transform_function,
     );
@@ -58,7 +186,7 @@ pub fn partial_pattern_from_derive(input: DeriveInput, is_terminal_pattern: bool
             &next_module_name,
             "send_channel",
             "Send",
-            &generic_type_parameters,
+            &type_param,
             &field_names,
         )
     });
@@ -68,7 +196,7 @@ pub fn partial_pattern_from_derive(input: DeriveInput, is_terminal_pattern: bool
             &next_module_name,
             "recv_channel",
             "Recv",
-            &generic_type_parameters,
+            &type_param,
             &field_names,
         )
     });
@@ -78,15 +206,15 @@ pub fn partial_pattern_from_derive(input: DeriveInput, is_terminal_pattern: bool
             &next_module_name,
             "bidir_channel",
             "Bidir",
-            &generic_type_parameters,
+            &type_param,
             &field_names,
         )
     });
 
     let output = quote! {
-        impl< #( #generic_type_parameters ,)* > #partial_pattern_name < #( #generic_type_parameters ,)* >
+        impl< #( #type_param ,)* > #partial_pattern_name < #( #type_param,)* >
         where
-            #( #generic_type_parameters: std::any::Any + std::marker::Send ,)*
+            #( #type_param : std::any::Any + std::marker::Send ,)*
         {
             #new_method
             #then_do_method
@@ -199,159 +327,9 @@ fn new_method(
     }
 }
 
-fn get_fields(data: Data) -> Vec<Field> {
-    match data {
-        Data::Struct(DataStruct {
-            fields: Fields::Named(FieldsNamed { named, .. }),
-            ..
-        }) => named.into_iter().collect(),
-        _ => panic!("A PartialPattern should only be created from a struct with named fields."),
-    }
-}
-
-fn generic_type_parameters(generics: Generics) -> Vec<Ident> {
-    generics
-        .params
-        .into_iter()
-        .filter_map(|p| match p {
-            GenericParam::Type(TypeParam { ident, .. }) => Some(ident),
-            _ => None,
-        })
-        .collect::<Vec<Ident>>()
-}
-
-#[derive(Debug, Clone)]
-struct JoinPattern {
-    pub name: String,
-    pub ident: Ident,
-}
-
-impl JoinPattern {
-    pub fn from_partial_pattern_name(partial_pattern_name: &Ident) -> Self {
-        let name = partial_pattern_name
-            .to_string()
-            .replace("PartialPattern", "JoinPattern");
-        let ident = Ident::new(&name, Span::call_site());
-
-        Self { name, ident }
-    }
-
-    pub fn transform_function(&self) -> TokenStream2 {
-        match self.name.as_str() {
-            "SendJoinPattern" => quote!(transform_send(f)),
-            "RecvJoinPattern" => quote!(transform_recv(f)),
-            "BidirJoinPattern" => quote!(transform_bidir(f)),
-            _ => panic!("Unsuppoted Module"),
-        }
-    }
-
-    pub fn requires_junction_id(&self) -> bool {
-        match self.name.as_str() {
-            "SendJoinPattern" => true,
-            _not_send_pattern => false,
-        }
-    }
-}
-
-pub struct ParsedChannels {
-    pub field_names: Vec<TokenStream2>,
-    pub field_ty_with_generics: Vec<TokenStream2>,
-    pub function_args: Vec<Ident>,
-    pub return_type: TokenStream2,
-}
-
-impl ParsedChannels {
-    /// Create a `ParsedChannels` struct from a `Vec<Field>`
-    pub fn from_fields(fields: Vec<Field>) -> Self {
-        let mut field_names: Vec<TokenStream2> = Vec::new();
-        let mut field_ty_with_generics: Vec<TokenStream2> = Vec::new();
-        let mut function_args: Vec<Ident> = Vec::new();
-        let mut return_type: Option<Ident> = None;
-
-        let channels: Vec<Field> = fields.into_iter().filter(|f| is_channel(f)).collect();
-
-        for Field { ident, ty, .. } in channels {
-            // Extract the field name
-            let field_name = match ident {
-                Some(name) => name,
-                _field_not_named => continue,
-            };
-
-            // Extract the field type and its generics
-            let (field_type, mut field_generics) = if let Some(PathSegment {
-                ident,
-                arguments:
-                    PathArguments::AngleBracketed(AngleBracketedGenericArguments { args, .. }),
-            }) = get_last_type_path_segment(ty)
-            {
-                let generics: Vec<Ident> = args
-                    .into_iter()
-                    .filter_map(|a| match a {
-                        GenericArgument::Type(t) => get_last_type_path_segment(t),
-                        _ => None,
-                    })
-                    .map(|ps| ps.ident)
-                    .collect();
-                (ident, generics)
-            } else {
-                continue;
-            };
-
-            // Add the field name to the Vec
-            field_names.push(quote!(#field_name));
-
-            // Create the combined type and generics, and add to the Vec
-            let combined_ty_with_generics = quote!(#field_type< #( #field_generics ,)* >);
-            field_ty_with_generics.push(combined_ty_with_generics);
-
-            // Depending on the type of the field perform a different action
-            match field_type.to_string().as_str() {
-                "StrippedSendChannel" => {
-                    let generic_type = field_generics
-                        .pop()
-                        .expect("Send channel should have a generic type parameter");
-                    function_args.push(generic_type);
-                }
-                "StrippedRecvChannel" => {
-                    let generic_type = field_generics
-                        .pop()
-                        .expect("Send channel should have a generic type parameter");
-                    match return_type {
-                        Some(_) => panic!("There can only be a single return type"),
-                        None => return_type = Some(generic_type),
-                    }
-                }
-                "StrippedBidirChannel" => {
-                    let generic_type = field_generics
-                        .pop()
-                        .expect("Send channel should have a generic type parameter");
-                    let generic_return_type = field_generics
-                        .pop()
-                        .expect("Send channel should have a generic type parameter");
-                    function_args.push(generic_type);
-                    match return_type {
-                        Some(_) => panic!("There can only be a single return type"),
-                        None => return_type = Some(generic_return_type),
-                    }
-                }
-                _other_field_type => continue,
-            }
-        }
-
-        let return_type = return_type.map_or(quote!(()), |rt| quote!(#rt));
-
-        ParsedChannels {
-            field_names,
-            field_ty_with_generics,
-            function_args,
-            return_type,
-        }
-    }
-}
-
 fn is_channel(field: &Field) -> bool {
     let Field { ty, .. } = field;
-    let last_segment = match ty {
+    match ty {
         Type::Path(TypePath {
             path: Path { segments, .. },
             ..
@@ -359,31 +337,22 @@ fn is_channel(field: &Field) -> bool {
         _ => return false,
     }
     .into_iter()
-    .last();
-
-    let channel_type = match last_segment {
-        Some(s) => s.ident.to_string(),
-        None => return false,
-    };
-
-    match channel_type.as_str() {
+    .last()
+    .map(|f| match f.ident.to_string().as_str() {
         "StrippedSendChannel" | "StrippedRecvChannel" | "StrippedBidirChannel" => true,
         _ => false,
-    }
+    })
+    .unwrap_or(false)
 }
 
 fn get_last_type_path_segment(ty: Type) -> Option<PathSegment> {
-    let last_segment = match ty {
+    match ty {
         Type::Path(TypePath {
             path: Path { segments, .. },
             ..
         }) => Some(segments),
         _ => None,
     }
-    .map(|s| s.into_iter().last());
-
-    match last_segment {
-        Some(Some(s)) => Some(s),
-        _ => None,
-    }
+    .map(|s| s.into_iter().last())
+    .flatten()
 }
