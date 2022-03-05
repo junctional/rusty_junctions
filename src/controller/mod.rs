@@ -1,13 +1,5 @@
 //! Control structure started by any new `Junction`, running in a background thread
 //! to handle the coordination of Join Pattern creation and execution.
-
-mod alive;
-mod controller_handle;
-mod fire;
-mod handlers;
-
-pub use controller_handle::ControllerHandle;
-
 use std::{
     collections::HashMap,
     sync::mpsc::{Receiver, Sender},
@@ -25,6 +17,13 @@ use crate::{
 use bag::Bag;
 use counter::Counter;
 use inverted_index::InvertedIndex;
+
+mod alive;
+mod fire;
+mod handle;
+mod handlers;
+
+pub use handle::ControllerHandle;
 
 /// Struct to handle `Packet`s sent from the user in the background.
 ///

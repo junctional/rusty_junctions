@@ -139,6 +139,7 @@ mod join_pattern;
 mod junction;
 mod types;
 
+pub use controller::ControllerHandle;
 pub use junction::Junction;
 
 // Generate the library, upto an order of 32.
