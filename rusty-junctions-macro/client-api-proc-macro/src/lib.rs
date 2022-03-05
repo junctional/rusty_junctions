@@ -11,11 +11,11 @@
 //! Patterns](https://docs.rs/rusty_junctions/0.1.0/rusty_junctions/patterns/index.html)
 //! that are used to declaratively define the desired concurrent computation.
 
-use crate::single_junction::Junction;
+use crate::junction::Junction;
 use proc_macro::{self, TokenStream};
 use syn::{__private::TokenStream2, parse_macro_input};
 
-mod single_junction;
+mod junction;
 
 /// Define an entire
 /// [`Junction`](https://docs.rs/rusty_junctions/0.1.0/rusty_junctions/struct.Junction.html)

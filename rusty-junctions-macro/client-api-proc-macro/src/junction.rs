@@ -30,6 +30,25 @@ impl FromStr for Mode {
     }
 }
 
+pub struct ControlDefinition {
+    name: Ident,
+}
+
+impl Parse for ControlDefinition {
+    fn parse(input: ParseStream) -> Result<Self, syn::Error> {
+        if input.is_empty() {
+            panic!("Invalid input for ControlDefinition");
+        }
+
+        let name = input.parse::<Ident>()?;
+        let _as_token = input.parse::<Token![as]>()?;
+        let _ty = input.parse::<Ident>()?;
+        let _comma = input.parse::<Token![,]>()?;
+
+        Ok(Self { name })
+    }
+}
+
 pub struct ChannelDefinition {
     name: Ident,
     mode: Mode,
@@ -53,13 +72,13 @@ impl Parse for ChannelDefinition {
     }
 }
 
-impl From<&ChannelDefinition> for TokenStream2 {
-    fn from(channel: &ChannelDefinition) -> Self {
-        let ChannelDefinition { name, mode, ty } = channel;
+impl ChannelDefinition {
+    fn to_tokens(&self, junction_name: &Ident) -> TokenStream2 {
+        let ChannelDefinition { name, mode, ty } = self;
         match mode {
-            Mode::Send => quote!( let #name = junction.send_channel::<#ty>(); ),
-            Mode::Bidir => quote!( let #name = junction.bidir_channel::<#ty>(); ),
-            Mode::Recv => quote!( let #name = junction.recv_channel::<#ty>(); ),
+            Mode::Send => quote!( let #name = #junction_name.send_channel::<#ty>(); ),
+            Mode::Bidir => quote!( let #name = #junction_name.bidir_channel::<#ty>(); ),
+            Mode::Recv => quote!( let #name = #junction_name.recv_channel::<#ty>(); ),
         }
     }
 }
@@ -181,8 +200,9 @@ impl JoinPattern {
             .collect::<Vec<&Ident>>();
         let function = &self.function_block;
 
+        // TODO: The move here could introduce issues
         quote! {
-            #junction_name . #when_token #(. #and_tokens)* .then_do( | #(#channels ,)* | #function )
+            #junction_name . #when_token #(. #and_tokens)* .then_do( move | #(#channels ,)* | #function );
         }
     }
 }
@@ -215,6 +235,7 @@ impl Parse for JoinPattern {
 }
 
 pub struct Junction {
+    junction: Option<ControlDefinition>,
     channels: Vec<ChannelDefinition>,
     join_patterns: Vec<JoinPattern>,
 }
@@ -224,6 +245,11 @@ impl Parse for Junction {
         if input.is_empty() {
             panic!("Invalid input for Junction");
         }
+
+        let junction = match input.fork().parse::<ControlDefinition>() {
+            Ok(_) => input.parse::<ControlDefinition>().ok(),
+            _ => None
+        };
 
         // Parse all of the channels from the list
         let mut channels: Punctuated<ChannelDefinition, Token![,]> = Punctuated::new();
@@ -243,6 +269,7 @@ impl Parse for Junction {
         let channels = channels.into_iter().collect::<Vec<ChannelDefinition>>();
 
         Ok(Self {
+            junction,
             channels,
             join_patterns,
         })
@@ -251,7 +278,16 @@ impl Parse for Junction {
 
 impl From<Junction> for TokenStream2 {
     fn from(junction: Junction) -> Self {
-        let junction_name = Ident::new("junction", Span::call_site());
+        // Create a temporary junction named with a UUID
+        let mut uuid_buffer = uuid::Uuid::encode_buffer();
+        let uuid = uuid::Uuid::new_v4().to_simple().encode_lower(&mut uuid_buffer);
+        let junction_name = Ident::new(&format!("junction_{}", uuid), Span::call_site());
+
+        let return_junction = junction.junction.map(|j| {
+            let name = j.name;
+            quote!(let mut #name = #junction_name;)
+        });
+
         let join_pattern_definitions = junction
             .join_patterns
             .iter()
@@ -261,13 +297,14 @@ impl From<Junction> for TokenStream2 {
         let channel_definitions = junction
             .channels
             .iter()
-            .map(|chan| chan.into())
+            .map(|chan| chan.to_tokens(&junction_name))
             .collect::<Vec<TokenStream2>>();
 
         let output = quote! {
             let #junction_name = rusty_junctions::Junction::new();
             #( #channel_definitions )*
             #( #join_pattern_definitions )*
+            #return_junction
         };
 
         output.into()
