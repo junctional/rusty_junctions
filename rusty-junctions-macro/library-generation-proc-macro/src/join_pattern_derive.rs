@@ -1,10 +1,10 @@
+use crate::Module;
 use proc_macro2::{Ident, Span};
 use quote::quote;
 use syn::__private::TokenStream2;
 use syn::{
     Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed, Path, PathSegment, Type, TypePath,
 };
-use crate::Module;
 
 pub fn join_pattern_from_derive(input: DeriveInput) -> TokenStream2 {
     let DeriveInput { ident, data, .. } = input;
@@ -12,25 +12,22 @@ pub fn join_pattern_from_derive(input: DeriveInput) -> TokenStream2 {
     let join_pattern_name = ident.to_string().replace("Partial", "Join");
     let join_pattern_name = Ident::new(&join_pattern_name, Span::call_site());
 
-    let fields: Vec<Field> = match data {
+    let channel_fields: Vec<Ident> = match data {
         Data::Struct(DataStruct {
             fields: Fields::Named(FieldsNamed { named, .. }),
             ..
-        }) => named.into_iter().collect(),
+        }) => named.into_iter().collect::<Vec<Field>>(),
         _ => panic!("A JoinPattern should only be created from a struct with named fields."),
-    };
+    }
+    .into_iter()
+    .filter_map(|f| channel_field(f))
+    .collect();
 
-    let channel_fields: Vec<Ident> = fields
-        .into_iter()
-        .filter_map(|f| channel_field(f))
-        .collect();
-
-    let module = Module::from_usize(channel_fields.len());
-    let channel_number = module.number();
-    let module_name = module.ident();
+    let arity = channel_fields.len();
+    let module_name = Module::from_usize(arity).ident();
 
     let function_args: Vec<TokenStream2> = std::iter::repeat(quote!(messages.remove(0)))
-        .take(channel_number)
+        .take(arity)
         .collect();
 
     let output = quote! {
