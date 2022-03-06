@@ -255,6 +255,7 @@ impl Parse for JoinPattern {
 pub struct Junction {
     junction: Option<ControlDefinition>,
     channels: Vec<ChannelDefinition>,
+    super_statements: Vec<TokenStream2>,
     join_patterns: Vec<JoinPattern>,
 }
 
@@ -266,7 +267,7 @@ impl Parse for Junction {
 
         let junction = match input.fork().parse::<ControlDefinition>() {
             Ok(_) => input.parse::<ControlDefinition>().ok(),
-            _ => None
+            _ => None,
         };
 
         // Parse all of the channels from the list
@@ -286,9 +287,19 @@ impl Parse for Junction {
 
         let channels = channels.into_iter().collect::<Vec<ChannelDefinition>>();
 
+        let super_statements = channels
+            .iter()
+            .map(|ChannelDefinition { name, .. }| {
+                let super_name =
+                    Ident::new(&format!("{}_super", name.to_string()), Span::call_site());
+                quote!(let #super_name = #name.clone();)
+            })
+            .collect::<Vec<TokenStream2>>();
+
         Ok(Self {
             junction,
             channels,
+            super_statements,
             join_patterns,
         })
     }
@@ -308,10 +319,17 @@ impl From<Junction> for TokenStream2 {
             quote!(let mut #name = #junction_name;)
         });
 
+        let super_stmts = junction.super_statements;
         let join_pattern_definitions = junction
             .join_patterns
             .iter()
-            .map(|pat| pat.to_tokens(&junction.channels, &junction_name))
+            .map(|pat| {
+                let pattern = pat.to_tokens(&junction.channels, &junction_name);
+                quote! {
+                    #( #super_stmts )*
+                    #pattern
+                }
+            })
             .collect::<Vec<TokenStream2>>();
 
         let channel_definitions = junction
@@ -319,6 +337,7 @@ impl From<Junction> for TokenStream2 {
             .iter()
             .map(|chan| chan.to_tokens(&junction_name))
             .collect::<Vec<TokenStream2>>();
+
 
         let output = quote! {
             let #junction_name = rusty_junctions::Junction::new();
