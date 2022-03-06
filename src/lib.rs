@@ -141,6 +141,7 @@ mod types;
 
 pub use controller::ControllerHandle;
 pub use junction::Junction;
+pub use rusty_junctions_macro::client::junction as junction;
 
 // Generate the library, upto an order of 32.
 rusty_junctions_macro::library::generate!(32);
