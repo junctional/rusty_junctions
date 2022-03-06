@@ -52,7 +52,7 @@ impl Parse for ControlDefinition {
 pub struct ChannelDefinition {
     name: Ident,
     mode: Mode,
-    ty: Ident,
+    ty: TokenStream2,
 }
 
 impl Parse for ChannelDefinition {
@@ -66,7 +66,25 @@ impl Parse for ChannelDefinition {
         let mode = Mode::from_str(&input.parse::<Ident>()?.to_string())
             .map_err(|e| syn::Error::new(Span::call_site(), e))?;
         let _namespace_token = input.parse::<Token![::]>()?;
-        let ty = input.parse::<Ident>()?;
+
+        let ty = match mode {
+            Mode::Bidir => match input.parse::<Type>() {
+                Ok(Type::Tuple(TypeTuple { elems, .. })) => Some(elems),
+                _ => None,
+            }
+            .map(|es| es.into_iter().collect::<Vec<Type>>())
+            .map(|es| {
+                let elem1 = es.get(0);
+                let elem2 = es.get(1);
+                match (elem1, elem2) {
+                    (Some(e1), Some(e2)) => Some(quote!(#e1, #e2)),
+                    _ => None,
+                }
+            })
+            .flatten(),
+            Mode::Send | Mode::Recv => input.parse::<Type>().map(|t| quote!(#t)).ok(),
+        }
+        .expect("Invalid Bidirectional Channel Types");
 
         Ok(Self { name, mode, ty })
     }
