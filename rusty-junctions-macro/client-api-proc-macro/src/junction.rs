@@ -5,7 +5,7 @@ use syn::{
     __private::TokenStream2,
     parse::{Parse, ParseStream},
     punctuated::Punctuated,
-    Block, Ident, Token,
+    Block, Ident, Token, Type, TypeTuple,
 };
 
 #[derive(Eq, PartialEq)]
@@ -298,7 +298,9 @@ impl From<Junction> for TokenStream2 {
     fn from(junction: Junction) -> Self {
         // Create a temporary junction named with a UUID
         let mut uuid_buffer = uuid::Uuid::encode_buffer();
-        let uuid = uuid::Uuid::new_v4().to_simple().encode_lower(&mut uuid_buffer);
+        let uuid = uuid::Uuid::new_v4()
+            .to_simple()
+            .encode_lower(&mut uuid_buffer);
         let junction_name = Ident::new(&format!("junction_{}", uuid), Span::call_site());
 
         let return_junction = junction.junction.map(|j| {
