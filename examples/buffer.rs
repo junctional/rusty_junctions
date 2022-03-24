@@ -4,13 +4,11 @@
 /// most importantly demonstrates error handling related to channels not being
 /// able to send messages after their controller has shut down. Failing to
 /// correctly handle cases like that will cause threads to panic.
-
-use std::any::Any;
-use std::thread;
-
-use rusty_junctions::channels::{RecvChannel, SendChannel};
-use rusty_junctions::types::ControllerHandle;
-use rusty_junctions::Junction;
+use rusty_junctions::{
+    channels::{RecvChannel, SendChannel},
+    ControllerHandle, Junction,
+};
+use std::{any::Any, thread};
 
 // Create a new private buffer Junction and return all required channels.
 //

@@ -13,10 +13,8 @@
 /// Refer to the following Wikipedia article for the mathematical background:
 ///
 /// https://en.wikipedia.org/wiki/Collatz_conjecture
-
-use std::env;
-
 use rusty_junctions::Junction;
+use std::env;
 
 // Define a result type to be sent over channels.
 // Note that the type *must* implement the clone trait.

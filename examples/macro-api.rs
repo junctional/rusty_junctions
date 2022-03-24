@@ -1,5 +1,4 @@
-use rusty_junctions_client_macro::{channel_def, junction_dec, when};
-use rusty_junctions_macro::client::junction;
+use rusty_junctions_macro::client::{channel, junction, junction_dec, when};
 
 fn main() {
     pretty_env_logger::init();
@@ -29,21 +28,31 @@ fn main() {
     // have time for the pattern to fire.
     handle.stop();
 
-
     // Single Junction Procedural Macro API
+    // junction as ControllerHandle, // Bring the cotnroller handle into scope with this name
     junction! {
-        name as Send::String,
-        value as Recv::String,
-        | name, value | {
-            println!("Single Junction Procedural Macro API: {name}");
-            name
+        // some_junction as Junction,
+        get as Recv::i32,
+        set as Send::i32,
+        value as Send::i32,
+        | get, value | {
+            println!("Getting value: {value}");
+            value_super.send(value).unwrap();
+            value
+        },
+        | set, value | {
+            println!("Setting value: {value} --> {set}");
+            value_super.send(set).unwrap();
         },
     };
-    // value.send(2).unwrap();
-    name.send(String::from("Hello, World!")).unwrap();
-    let value = value.recv();
-    println!("Got value {value:?}");
+    // let _handle = some_junction.controller_handle();
 
+    value.send(1809124).unwrap();
+    let _v = get.recv().unwrap();
+    set.send(2022).unwrap();
+
+    // let value = value.recv();
+    // println!("Got value {value:?}");
 
     // When! Macro API
     let junction = rusty_junctions::Junction::new();

@@ -10,7 +10,9 @@ fn main() {
             println!("Single Junction Procedural Macro API: {message} {id}");
         },
     };
-    message.send(String::from("Secret Concurrent Message")).unwrap();
+    message
+        .send(String::from("Secret Concurrent Message"))
+        .unwrap();
     id.send(1960).unwrap();
 
     junction! {
@@ -31,5 +33,4 @@ fn main() {
         println!("Newly Installed Pattern: {c}");
     });
     channel.send("Lots of opportunities".to_string()).unwrap();
-
 }
