@@ -30,7 +30,7 @@
 ///
 /// See the crate level documentation for further details.
 pub mod client {
-    pub use client_api_macro::{channel_def, junction_dec, when};
+    pub use client_api_macro::{channel, junction as junction_dec, when};
     pub use client_api_proc_macro::junction;
 }
 

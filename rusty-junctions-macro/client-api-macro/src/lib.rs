@@ -52,14 +52,14 @@ macro_rules! when {
     }
 }
 
-/// An internal macro used by the [`junction_dec`](junction_dec) macro.
+/// An internal macro used by the [`junction`](junction) macro.
 ///
-/// The [`channel_def`](channel_def) macro is used internally by the
-/// [`junction_dec`](junction_dec) macro. For this reason it needs to be
+/// The [`channel`](channel) macro is used internally by the
+/// [`junction`](junction) macro. For this reason it needs to be
 /// made available as part of the Public API of the [Rusty
 /// Junctions](https://crates.io/crates/rusty_junctions) crate.
 #[macro_export]
-macro_rules! channel_def {
+macro_rules! channel {
     (Send, $junction:ident, $name:ident, $type:ty) => {
         let $name = $junction.send_channel::<$type>();
     };
@@ -98,7 +98,7 @@ macro_rules! channel_def {
 /// However, it is also possible to use this alternative (simpler?) syntax for defining the entire
 /// [`Junction`](https://docs.rs/rusty_junctions/0.1.0/rusty_junctions/struct.Junction.html).
 /// ```rust
-/// let (name, value, mut handle) = junction_dec! {
+/// let (name, value, mut handle) = junction! {
 ///     name as Send::String,
 ///     value as Send::i32,
 ///     |name, value| {
@@ -122,15 +122,15 @@ macro_rules! channel_def {
 ///   preventing them from being accessed from elsewhere in the client.
 ///
 /// # Disadvantages
-/// * When using the [`junction_dec`](junction_dec) macro you are required
-///   to bring the [`when`](when) and [`channel_def`](channel_def) into
+/// * When using the [`junction`](junction) macro you are required
+///   to bring the [`when`](when) and [`channel`](channel) into
 ///   the name space as well. This is due to a limitation of [Declarative
 ///   Macros](https://doc.rust-lang.org/reference/macros-by-example.html),
 ///   that they are not composed as single units, and are instead executed
 ///   in a function like manner albeit during compilation and not
 ///   runtime. A future implementation might utilise a Incremental TT
 ///   Muncher, and deeper recursion to avoid having calls to other macros
-///   ([`when`](when) and [`channel_def`](channel_def)) which then need to
+///   ([`when`](when) and [`channel`](channel)) which then need to
 ///   be included in the name space of the client.
 ///
 /// * As you can see in the [Example](#Example) above the Controller
@@ -139,12 +139,12 @@ macro_rules! channel_def {
 ///   to fire.
 ///
 #[macro_export]
-macro_rules! junction_dec {
+macro_rules! junction {
     ( $( $channel_name:ident as $mode:ident :: $type:ty),* $(,)+
       $( | $( $args:ident ),* | $function_block:block  ),* $(,)+ ) => {{
         let mut j = rusty_junctions::Junction::new();
 
-        $( channel_def!($mode, j, $channel_name, $type); )*
+        $( channel!($mode, j, $channel_name, $type); )*
 
         $(
             when!(j; $( $args ),* ).then_do(| $( $args ),* | $function_block );

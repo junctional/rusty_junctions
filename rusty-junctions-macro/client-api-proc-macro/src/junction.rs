@@ -94,7 +94,10 @@ impl ChannelDefinition {
     fn to_tokens(&self, junction_name: &Ident) -> TokenStream2 {
         let ChannelDefinition { name, mode, ty } = self;
         match mode {
-            Mode::Send => quote!( let #name = #junction_name.send_channel::<#ty>(); ),
+            Mode::Send => quote! {
+                #[allow(unused_variables)]
+                let #name = #junction_name.send_channel::<#ty>();
+            },
             Mode::Bidir => quote!( let #name = #junction_name.bidir_channel::<#ty>(); ),
             Mode::Recv => quote!( let #name = #junction_name.recv_channel::<#ty>(); ),
         }
@@ -292,7 +295,10 @@ impl Parse for Junction {
             .map(|ChannelDefinition { name, .. }| {
                 let super_name =
                     Ident::new(&format!("{}_super", name.to_string()), Span::call_site());
-                quote!(let #super_name = #name.clone();)
+                quote! {
+                    #[allow(unused_variables)]
+                    let #super_name = #name.clone();
+                }
             })
             .collect::<Vec<TokenStream2>>();
 
