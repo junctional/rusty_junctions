@@ -9,7 +9,7 @@ use std::hash::Hash;
 /// For each key inserted, an arbitrary number of values is stored as a
 /// `LinkedList`, making this collection appropritate for iterating over
 /// all values associated to a single key.
-pub(crate) struct InvertedIndex<K, V> {
+pub struct InvertedIndex<K, V> {
     look_up_table: HashMap<K, LinkedList<V>>,
 }
 
@@ -17,7 +17,7 @@ impl<K, V> InvertedIndex<K, V>
 where
     K: Hash + Eq,
 {
-    pub(crate) fn new() -> InvertedIndex<K, V> {
+    pub fn new() -> InvertedIndex<K, V> {
         InvertedIndex {
             look_up_table: HashMap::new(),
         }
@@ -28,7 +28,7 @@ where
     /// If the key does not yet exist in the collection, it is added with
     /// the value. Otherwise, the given value is added as the last value
     /// in the list of values associated with the given key.
-    pub(crate) fn insert_single(&mut self, key: K, value: V) {
+    pub fn insert_single(&mut self, key: K, value: V) {
         match self.look_up_table.get_mut(&key) {
             Some(values) => values.push_back(value),
             None => {
@@ -46,7 +46,7 @@ where
     /// the values, in order. Otherwise, the given values are added in
     /// order at the end of the list of values already associated with the
     /// given key.
-    pub(crate) fn insert_multiple(&mut self, key: K, values: impl IntoIterator<Item = V>) {
+    pub fn insert_multiple(&mut self, key: K, values: impl IntoIterator<Item = V>) {
         match self.look_up_table.get_mut(&key) {
             Some(stored_values) => {
                 values.into_iter().for_each(|v| stored_values.push_back(v));
@@ -62,7 +62,7 @@ where
     /// Retrieve an immutable reference to the first value added for the
     /// given key, if the key is available in the collection. Otherwise,
     /// return `None`.
-    pub(crate) fn peek_first(&self, key: &K) -> Option<&V> {
+    pub fn peek_first(&self, key: &K) -> Option<&V> {
         self.look_up_table.get(key)?.front()
     }
 
@@ -71,7 +71,7 @@ where
     /// Retrieve an immutable reference to all values, in order of
     /// insertion, for the given key, if the key is available in the
     /// collection. Otherwise, return `None`.
-    pub(crate) fn peek_all(&self, key: &K) -> Option<&LinkedList<V>> {
+    pub fn peek_all(&self, key: &K) -> Option<&LinkedList<V>> {
         self.look_up_table.get(key)
     }
 }

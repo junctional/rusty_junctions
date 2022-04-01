@@ -2,14 +2,19 @@
 //! together. Main structure for the public interface, used to create new
 //! channels and construct `JoinPattern`s based on them.
 
-use std::any::Any;
-use std::ops::Drop;
-use std::sync::mpsc::{channel, RecvError, Sender};
+use std::{
+    any::Any,
+    ops::Drop,
+    sync::mpsc::{channel, RecvError, Sender},
+};
 
-use super::channels::{BidirChannel, RecvChannel, SendChannel};
-use super::controller::Controller;
-use super::patterns::unary::{BidirPartialPattern, RecvPartialPattern, SendPartialPattern};
-use super::types::{ids, ControllerHandle, Packet};
+use crate::{
+    channels::{BidirChannel, RecvChannel, SendChannel},
+    controller::{Controller, ControllerHandle},
+    // join_pattern::JoinPattern,
+    patterns::unary::{BidirPartialPattern, RecvPartialPattern, SendPartialPattern},
+    types::{ids, Packet},
+};
 
 /// Struct managing the creation of new channels and Join Patterns.
 ///
@@ -124,11 +129,14 @@ impl Junction {
             .send(Packet::NewChannelIdRequest {
                 return_sender: id_sender,
             })
+            .map_err(|e| log::error!("Failed to send NewChannelIdRequest: {e:?}"))
             .unwrap();
 
         id_receiver.recv()
     }
+}
 
+impl Junction {
     /// Create new partial Join Pattern starting with a `SendChannel`.
     ///
     /// # Panics
@@ -204,8 +212,12 @@ impl Drop for Junction {
     /// associated `Controller` and join the control thread. Otherwise, no
     /// action is needed.
     fn drop(&mut self) {
+        log::debug!("Dropping Junction - Attempting to shutdown Controller");
         if self.controller_handle.is_some() {
+            log::debug!("Controller has a ControllerHandle");
             self.controller_handle.take().unwrap().stop();
+        } else {
+            log::debug!("Controller didn't have a ControllerHandle");
         }
     }
 }

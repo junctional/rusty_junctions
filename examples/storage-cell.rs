@@ -1,6 +1,5 @@
 /// Simple storage cell implementation to demonstrate every available
 /// channel as well as join patterns with repeated channels.
-
 use rusty_junctions::Junction;
 
 fn main() {
@@ -18,7 +17,7 @@ fn main() {
 
     // New channel to swap the value of the storage cell for a new one and
     // retrieve the value that was just replaced.
-    let swap = cell.bidir_channel::<i32, i32>();
+    let swap = cell.bidir_channel::<i32, String>();
 
     // New channel that will actually carry the value so that at no point
     // any given thread will have possession over it so concurrency issues
@@ -67,14 +66,14 @@ fn main() {
     // a multithreaded environment with many users accessing the storage
     // cell, the value retrieved is exactly the value that has been
     // updated.
-    cell.when(&val).and_bidir(&swap).then_do(move |old, new| {
+    cell.when(&val).and_bidir(&swap).then_do(move |key, value| {
         println!(
             ">> val-swap pattern fired with old={} and new={}!",
-            old, new
+            key, value
         );
-        swap_val.send(new).unwrap();
+        swap_val.send(key).unwrap();
 
-        old
+        "Something".to_string()
     });
 
     // Declare a new Join Pattern that mentions the same channel multiple
@@ -108,7 +107,8 @@ fn main() {
 
     // Request a swap of the current value of the storage cell with a new
     // one and print the old value that is retrieved as a result.
-    println!("swap.send_recv()={}", swap.send_recv(16).unwrap());
+    let thing: String = swap.send_recv(16).expect("faield to get value");
+    println!("swap.send_recv()={thing}");
 
     // Request the current value of the storage cell again and print it.
     println!("get.recv()={}", get.recv().unwrap());

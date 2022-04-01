@@ -2,19 +2,15 @@
 ///
 /// This code provides evidence that concurrent code using locks can equally
 /// be implemented using junctions and join patterns.
-
+use rusty_junctions::{
+    channels::{RecvChannel, SendChannel},
+    ControllerHandle, Junction,
+};
 use std::thread;
-
-use rusty_junctions::Junction;
-use rusty_junctions::types::ControllerHandle;
-use rusty_junctions::channels::{SendChannel, RecvChannel};
 
 // Create a new mutex using a private junction and return channels to acquire
 // and release it.
-fn new_mutex() -> (
-    ControllerHandle, RecvChannel<()>, SendChannel<()>
-)
-{
+fn new_mutex() -> (ControllerHandle, RecvChannel<()>, SendChannel<()>) {
     // Private junction to set up the mutex.
     let mut mutex = Junction::new();
 
@@ -25,7 +21,7 @@ fn new_mutex() -> (
     // Asynchronous state channel to represent a lock that can be consumed
     // and released.
     let lock = mutex.send_channel::<()>();
-    
+
     // When there is a lock available and a thread wants to acquire it,
     // unblock that thread which is equivalent to acquiring the lock.
     // It is mutually exclusive as no new lock message is sent out.

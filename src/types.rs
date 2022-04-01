@@ -1,11 +1,8 @@
 //! Collection of types to increase readability and maintainability of the
 //! crate.
 
-use std::any::Any;
-use std::sync::mpsc::Sender;
-use std::thread::{JoinHandle, Thread};
-
-use crate::patterns;
+use crate::join_pattern::JoinPattern;
+use std::{any::Any, marker::Send, sync::mpsc::Sender};
 
 /// Shallow wrapper for a trait object using `Box` that can pass through thread
 /// boundaries.
@@ -42,172 +39,12 @@ pub enum Packet {
         return_sender: Sender<ids::ChannelId>,
     },
     /// Request adding a new Join Pattern to the Junction.
-    AddJoinPatternRequest { join_pattern: JoinPattern },
+    // TODO: Currently dynamic dispatch is being used
+    AddJoinPatternRequest {
+        join_pattern: Box<dyn JoinPattern + Send>,
+    },
     /// Request the internal control thread managing the `Message`s to shut down.
     ShutDownRequest,
-}
-
-/// Enum defining all Join Patterns that can be added to a Junction using the
-/// `AddJoinPatternRequest` in a `Packet`.
-pub enum JoinPattern {
-    /// Single channel Join Pattern.
-    UnarySend(patterns::unary::SendJoinPattern),
-    /// Single `RecvChannel` Join Pattern.
-    UnaryRecv(patterns::unary::RecvJoinPattern),
-    /// Single `BidirChannel` Join Pattern.
-    UnaryBidir(patterns::unary::BidirJoinPattern),
-    /// Two `SendChannel` Join Pattern.
-    BinarySend(patterns::binary::SendJoinPattern),
-    /// `SendChannel` and `RecvChannel` Join Pattern.
-    BinaryRecv(patterns::binary::RecvJoinPattern),
-    /// `SendChannel` and `BidirChannel` Join Pattern.
-    BinaryBidir(patterns::binary::BidirJoinPattern),
-    /// Three `SendChannel` Join Pattern.
-    TernarySend(patterns::ternary::SendJoinPattern),
-    /// Two `SendChannel` and `RecvChannel` Join Pattern.
-    TernaryRecv(patterns::ternary::RecvJoinPattern),
-    /// Two `SendChannel` and `BidirChannel` Join Pattern.
-    TernaryBidir(patterns::ternary::BidirJoinPattern),
-}
-
-/// Handle to a `Junction`'s underlying `Controller`.
-///
-/// This struct carries a `JoinHandle` to the thread that the `Controller` of
-/// a `Junction` is running in. It allows for the `Controller` and its thread
-/// to be stopped gracefully at any point.
-pub struct ControllerHandle {
-    sender: Sender<Packet>,
-    control_thread_handle: Option<JoinHandle<()>>,
-}
-
-impl ControllerHandle {
-    pub(crate) fn new(sender: Sender<Packet>, handle: JoinHandle<()>) -> ControllerHandle {
-        ControllerHandle {
-            sender,
-            control_thread_handle: Some(handle),
-        }
-    }
-
-    /// Extracts a handle to the underlying thread.
-    pub fn thread(&self) -> Option<&Thread> {
-        match &self.control_thread_handle {
-            Some(h) => Some(h.thread()),
-            None => None,
-        }
-    }
-
-    /// Request the `Controller` to stop gracefully, then join its thread.
-    ///
-    /// # Panics
-    ///
-    /// Panics if it was unable to send shut-down request to the control thread.
-    pub fn stop(&mut self) {
-        self.sender.send(Packet::ShutDownRequest).unwrap();
-
-        self.control_thread_handle.take().unwrap().join().unwrap();
-    }
-}
-
-/// Function types related to various kind of functions that can be stored and
-/// executed with Join Patterns.
-pub mod functions {
-    use super::*;
-
-    /// Types and Traits for functions which take one argument.
-    pub mod unary {
-        use super::*;
-
-        /// Trait to allow boxed up functions that take one `Message` and return
-        /// nothing to be cloned.
-        pub trait FnBoxClone: Fn(Message) -> () + Send {
-            fn clone_box(&self) -> Box<dyn FnBoxClone>;
-        }
-
-        impl<F> FnBoxClone for F
-        where
-            F: Fn(Message) -> () + Send + Clone + 'static,
-        {
-            /// Proxy function to be able to implement the `Clone` trait on
-            /// boxed up functions that take one `Message` and return nothing.
-            fn clone_box(&self) -> Box<dyn FnBoxClone> {
-                Box::new(self.clone())
-            }
-        }
-
-        impl Clone for Box<dyn FnBoxClone> {
-            fn clone(&self) -> Box<dyn FnBoxClone> {
-                (**self).clone_box()
-            }
-        }
-
-        /// Type alias for boxed up cloneable functions that take one `Message` and
-        /// return nothing. Mainly meant to increase readability of code.
-        pub type FnBox = Box<dyn FnBoxClone>;
-    }
-
-    /// Types and Traits for functions which take two arguments.
-    pub mod binary {
-        use super::*;
-
-        /// Trait to allow boxed up functions that take two `Message`s and return
-        /// nothing to be cloned.
-        pub trait FnBoxClone: Fn(Message, Message) -> () + Send {
-            fn clone_box(&self) -> Box<dyn FnBoxClone>;
-        }
-
-        impl<F> FnBoxClone for F
-        where
-            F: Fn(Message, Message) -> () + Send + Clone + 'static,
-        {
-            /// Proxy function to be able to implement the `Clone` trait on
-            /// boxed up functions that take two `Message`s and return nothing.
-            fn clone_box(&self) -> Box<dyn FnBoxClone> {
-                Box::new(self.clone())
-            }
-        }
-
-        impl Clone for Box<dyn FnBoxClone> {
-            fn clone(&self) -> Box<dyn FnBoxClone> {
-                (**self).clone_box()
-            }
-        }
-
-        /// Type alias for boxed up cloneable functions that take two `Message`s and
-        /// return nothing. Mainly meant to increase readability of code.
-        pub type FnBox = Box<dyn FnBoxClone>;
-    }
-
-    /// Types and Traits for functions which take three arguments.
-    pub mod ternary {
-        use super::*;
-
-        /// Trait to allow boxed up functions that take three `Message`s and return
-        /// nothing to be cloned.
-        pub trait FnBoxClone: Fn(Message, Message, Message) -> () + Send {
-            fn clone_box(&self) -> Box<dyn FnBoxClone>;
-        }
-
-        impl<F> FnBoxClone for F
-        where
-            F: Fn(Message, Message, Message) -> () + Send + Clone + 'static,
-        {
-            /// Proxy function to be able to implement the `Clone` trait on
-            /// boxed up functions that take three `Message`s and return nothing.
-            fn clone_box(&self) -> Box<dyn FnBoxClone> {
-                Box::new(self.clone())
-            }
-        }
-
-        impl Clone for Box<dyn FnBoxClone> {
-            fn clone(&self) -> Box<dyn FnBoxClone> {
-                (**self).clone_box()
-            }
-        }
-
-        /// Type alias for boxed up cloneable functions that take three `Message`s and
-        /// return nothing. Mainly meant to increase readability of code.
-        pub type FnBox = Box<dyn FnBoxClone>;
-    }
 }
 
 /// Adds specific ID types for the various IDs that are used in the crate.
@@ -215,13 +52,13 @@ pub mod ids {
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     /// ID to identify a channel within a Join Pattern.
-    #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash)]
+    #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Ord, PartialOrd)]
     pub struct ChannelId(usize);
 
     impl ChannelId {
-        pub(crate) fn new(value: usize) -> ChannelId {
-            ChannelId(value)
-        }
+        // pub(crate) fn new(value: usize) -> ChannelId {
+        //     ChannelId(value)
+        // }
 
         /// Increment the internal value of the channel ID.
         pub(crate) fn increment(&mut self) {

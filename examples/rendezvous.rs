@@ -6,12 +6,11 @@
 ///
 /// Link to the paper:
 /// https://www.researchgate.net/profile/Nick_Benton2/publication/2569067_Jingle_Bells_Solving_the_Santa_Claus_Problem_in/links/0c9605264f92520a08000000/Jingle-Bells-Solving-the-Santa-Claus-Problem-in.pdf
-
+use rusty_junctions::{
+    channels::{BidirChannel, RecvChannel},
+    ControllerHandle, Junction,
+};
 use std::thread;
-
-use rusty_junctions::channels::{BidirChannel, RecvChannel};
-use rusty_junctions::types::ControllerHandle;
-use rusty_junctions::Junction;
 
 // Set up a private Junction for a rendezvous and return the public channels.
 pub fn rendezvous() -> (ControllerHandle, BidirChannel<u32, ()>, RecvChannel<()>) {

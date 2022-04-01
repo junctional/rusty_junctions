@@ -4,14 +4,12 @@
 /// Problem in Polyphonic C#" by Nick Benton
 ///
 /// The paper: https://www.researchgate.net/profile/Nick_Benton2/publication/2569067_Jingle_Bells_Solving_the_Santa_Claus_Problem_in/links/0c9605264f92520a08000000/Jingle-Bells-Solving-the-Santa-Claus-Problem-in.pdf
-
+use rusty_junctions::{
+    channels::{BidirChannel, RecvChannel},
+    ControllerHandle, Junction,
+};
 use rand::Rng;
-
 use std::{thread, time::Duration};
-
-use rusty_junctions::channels::{BidirChannel, RecvChannel};
-use rusty_junctions::types::ControllerHandle;
-use rusty_junctions::Junction;
 
 fn main() {
     /*****************************

@@ -1,8 +1,8 @@
 [package]
-name = "rusty_junctions"
+name = "rusty-junctions"
 version = "0.1.0"
-authors = ["Sebastian Müksch <sebastian.mueksch@gmail.com>"]
-edition = "2018"
+authors = ["Sebastian Müksch <sebastian.mueksch@gmail.com>", "Kyle Cotton <kylecottonkc@gmail.com>"]
+edition = "2021"
 description = "Join Pattern implementation in Rust."
 readme = "README.md"
 repository = "https://github.com/smueksch/rusty_junctions"
@@ -11,6 +11,12 @@ keywords = ["join-pattern", "join-calculus", "concurrency"]
 categories = ["concurrency"]
 
 [dependencies]
+bag = { path = "bag" }
+inverted-index = { path = "inverted-index" }
+counter = { path = "counter" }
+rusty-junctions-macro = "0.1.0"
+log = "0.4.14"
 
 [dev-dependencies]
 rand = "0.7.3"
+pretty_env_logger = "0.4.0"

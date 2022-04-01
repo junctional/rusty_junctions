@@ -11,7 +11,7 @@ use std::hash::Hash;
 /// Stores a `HashMap` of keys to `VecDeque` of values, which allows it to
 /// store and arbitrary amount of values for any given key and retrieve
 /// them in FIFO order.
-pub(crate) struct Bag<K, V> {
+pub struct Bag<K, V> {
     items: HashMap<K, VecDeque<V>>,
 }
 
@@ -19,7 +19,7 @@ impl<K, V> Bag<K, V>
 where
     K: Hash + Eq,
 {
-    pub(crate) fn new() -> Bag<K, V> {
+    pub fn new() -> Bag<K, V> {
         Bag {
             items: HashMap::new(),
         }
@@ -30,7 +30,7 @@ where
     /// If the given key already exists, the given value is added last in
     /// a `VecDeque` for the given key. Otherwise, the new key and value
     /// are inserted.
-    pub(crate) fn add(&mut self, key: K, item: V) {
+    pub fn add(&mut self, key: K, item: V) {
         match self.items.get_mut(&key) {
             Some(queue) => {
                 queue.push_back(item);
@@ -48,17 +48,17 @@ where
     ///
     /// Retrieve `Some` of the least recently added value for the given key
     /// if there is at least one available, otherwise return `None`.
-    pub(crate) fn retrieve(&mut self, key: &K) -> Option<V> {
+    pub fn retrieve(&mut self, key: &K) -> Option<V> {
         self.items.get_mut(key)?.pop_front()
     }
 
     /// Return true if there are values for the given key.
-    pub(crate) fn contains_items(&self, key: &K) -> bool {
+    pub fn contains_items(&self, key: &K) -> bool {
         self.items.get(key).map_or(false, |q| !q.is_empty())
     }
 
     /// Return the number of values stored for the given key.
-    pub(crate) fn count_items(&self, key: &K) -> usize {
+    pub fn count_items(&self, key: &K) -> usize {
         self.items.get(key).map_or(0, |q| q.len())
     }
 }

@@ -1,3 +1,4 @@
+#![feature(thread_is_running)]
 //! Crate implementing Join Patterns from the [Join Calculus](https://www.microsoft.com/en-us/research/wp-content/uploads/2017/01/join-tutorial.pdf) developed by
 //! Cédric Fournet and Georges Gonthier.
 //!
@@ -132,14 +133,15 @@
 //! For more examples, visit the [`examples`](https://github.com/smueksch/rusty_junctions/tree/master/examples) folder in the [Rusty Junctions GitHub
 //! repository](https://github.com/smueksch/rusty_junctions).
 
-mod bag;
 pub mod channels;
 mod controller;
-mod counter;
-mod function_transforms;
-mod inverted_index;
+mod join_pattern;
 mod junction;
-pub mod patterns;
-pub mod types;
+mod types;
 
+pub use controller::ControllerHandle;
 pub use junction::Junction;
+pub use rusty_junctions_macro::client::junction;
+
+// Generate the library, upto an order of 32.
+rusty_junctions_macro::library::generate!(32);

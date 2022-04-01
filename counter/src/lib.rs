@@ -40,7 +40,7 @@ const CARRY: Uint = 1;
 /// the internal representation using `Vec` small. Pushing a value at the back of
 /// a `Vec` may require resizing, but never moving existing elements.
 #[derive(Clone, Eq, Debug)]
-pub(crate) struct Counter {
+pub struct Counter {
     digits: Vec<Uint>,
 }
 
@@ -49,7 +49,7 @@ impl Counter {
     ///
     /// Increments the `Counter` and dynamically grows it if all of its digits
     /// have reached their maximum values.
-    pub(crate) fn increment(&mut self) {
+    pub fn increment(&mut self) {
         // Increment the lowest digit by a normal carry.
         let mut carry = CARRY;
 
